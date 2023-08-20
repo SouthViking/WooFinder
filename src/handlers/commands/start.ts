@@ -1,8 +1,8 @@
 import { storage } from '../../db';
 import { ensureUserExists } from '../../utils/users';
-import { HandlerDefinition, HandlerType } from '../../types/handlers';
+import { CommandHandlerDefinition, HandlerType } from '../../types/handlers';
 
-export const startHandlerDef: HandlerDefinition = {
+export const startHandlerDef: CommandHandlerDefinition = {
     type: HandlerType.COMMAND,
     name: 'Start',
     command: 'start',

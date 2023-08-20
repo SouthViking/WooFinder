@@ -1,7 +1,7 @@
 import { Update } from 'typegram';
 import { handlers } from './handlers';
 import { Context, Telegraf } from 'telegraf';
-import { HandlerDefinition } from './types/handlers';
+import { HandlerDefinition, HandlerType } from './types/handlers';
 
 interface WooFinderBotConfig {
     botToken: string;
@@ -17,19 +17,29 @@ class WooFinderBot {
     }
 
     private registerHandlers(handlers: HandlerDefinition[]) {
-        const handlersMetadata = handlers.map(handler => ({
-            name: handler.command,
-            command: handler.command,
-            description: handler.description || 'No description available.',
-        }))
-        this.bot.telegram.setMyCommands(handlersMetadata);
+        const commandsToAdd = [];
 
         for (const handler of handlers) {
-            this.bot.command(handler.command, handler.callback);
-            this.bot.action('pet_register', async (ctx) => {
-                console.log('Pet registration!');
-            });
+            switch (handler.type) {
+                case HandlerType.ACTION:
+                    this.bot.action(handler.trigger, handler.callback);
+                    break;
+
+                case HandlerType.COMMAND:
+                    commandsToAdd.push({
+                        name: handler.name,
+                        command: handler.command,
+                        description: handler.description || 'No description provided.',
+                    });
+                    this.bot.command(handler.command, handler.callback);
+                    break;
+
+                default:
+                    break;
+            }
         }
+
+        this.bot.telegram.setMyCommands(commandsToAdd);
     }
 
     public launch() {

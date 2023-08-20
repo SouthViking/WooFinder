@@ -1,6 +1,6 @@
 import { startHandlerDef } from './start';
-import { HandlerDefinition } from '../../types/handlers';
+import { CommandHandlerDefinition } from '../../types/handlers';
 
-export const commandHandlers: HandlerDefinition[] = [
+export const commandHandlers: CommandHandlerDefinition[] = [
     startHandlerDef,
 ]

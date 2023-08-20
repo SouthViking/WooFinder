@@ -7,10 +7,20 @@ export enum HandlerType {
     ACTION,
 }
 
-export interface HandlerDefinition {
-    type: HandlerType;
+export interface BaseHandlerDefinition {
     name: string;
-    command: string;
     description?: string;
     callback: HandlerFunc;
 };
+
+export interface CommandHandlerDefinition extends BaseHandlerDefinition {
+    type: HandlerType.COMMAND;
+    command: string;
+}
+
+export interface ActionHandlerDefinition extends BaseHandlerDefinition {
+    type: HandlerType.ACTION;
+    trigger: string;
+}
+
+export type HandlerDefinition = CommandHandlerDefinition | ActionHandlerDefinition;
