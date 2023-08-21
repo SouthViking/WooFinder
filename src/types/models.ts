@@ -11,17 +11,19 @@ export interface UserDocument extends Document {
     chatId: number;
 };
 
-export interface PetDocument extends Document {
+export interface PetData {
     owners: number[];
     name: string;
     otherNames?: string[];
-    birthDate: Date;
+    birthDate: number;
     species: ObjectId;
-    size: 'small' | 'medium' | 'large' | 'giant'
+    size: string;
     weight: number;
     description: string;
     picturePath?: string;
-};
+}
+
+export type PetDocument = PetData & Document;
 
 export interface SpeciesDocument extends Document {
     name: string;

@@ -1,6 +1,7 @@
-import { Update } from 'typegram';
 import { handlers } from './handlers';
-import { Context, Telegraf } from 'telegraf';
+import { ConversationSessionData } from './types/misc';
+import { Scenes, Telegraf, session } from 'telegraf';
+import { petRegistrationScene } from './scenes/pets/registration';
 import { HandlerDefinition, HandlerType } from './types/handlers';
 
 interface WooFinderBotConfig {
@@ -9,10 +10,16 @@ interface WooFinderBotConfig {
 };
 
 class WooFinderBot {
-    private readonly bot: Telegraf<Context<Update>>;
+    private readonly bot: Telegraf<Scenes.WizardContext<ConversationSessionData>>;
 
     constructor (private readonly config: WooFinderBotConfig) {
         this.bot = new Telegraf(config.botToken);
+
+        const stage = new Scenes.Stage<Scenes.WizardContext<ConversationSessionData>>([petRegistrationScene]);
+
+        this.bot.use(session());
+        this.bot.use(stage.middleware());
+
         this.registerHandlers(config.handlers);
     }
 
