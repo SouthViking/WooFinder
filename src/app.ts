@@ -11,6 +11,7 @@ dotenv.config();
 interface WooFinderBotConfig {
     botToken: string;
     handlers: HandlerDefinition[];
+    scenes: Scenes.WizardScene<Scenes.WizardContext<ConversationSessionData>>[];
 };
 
 class WooFinderBot {
@@ -19,7 +20,7 @@ class WooFinderBot {
     constructor (private readonly config: WooFinderBotConfig) {
         this.bot = new Telegraf(this.config.botToken);
 
-        const stage = new Scenes.Stage<Scenes.WizardContext<ConversationSessionData>>(scenes);
+        const stage = new Scenes.Stage<Scenes.WizardContext<ConversationSessionData>>(this.config.scenes);
 
         this.bot.use(session());
         this.bot.use(stage.middleware());
@@ -60,6 +61,7 @@ class WooFinderBot {
 
 const bot = new WooFinderBot({
     botToken: process.env.BOT_TOKEN as string,
+    scenes,
     handlers,
 });
 
