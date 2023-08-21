@@ -69,7 +69,7 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
         context.scene.session.pet!.species = new ObjectId(speciesId);
 
         context.reply(
-            'Now enter the name of your pet: ',
+            'Now enter the name of your pet.',
             { parse_mode: 'HTML' },    
         );
 
@@ -234,14 +234,14 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
         const petData = context.scene.session.pet!;
 
         let summaryMessage = `🐾 <b>${petData.name}'s record</b> 🐾\n`;
-        summaryMessage += `⚫ <b>Secondary names</b>: ${petData.otherNames}\n`;
-        summaryMessage += `⚫ <b>Date of birth</b>: ${petData.birthDate}\n`;
-        summaryMessage += `⚫ <b>Size</b>: ${petData.size}\n`;
-        summaryMessage += `⚫ <b>Weight</b>: ${petData.weight} kg\n`;
-        summaryMessage += `⚫ <b>Description</b>: ${petData.description}\n`;
+        summaryMessage += `· <b>Secondary names</b>: ${petData.otherNames}\n`;
+        summaryMessage += `· <b>Date of birth</b>: ${petData.birthDate}\n`;
+        summaryMessage += `· <b>Size</b>: ${petData.size}\n`;
+        summaryMessage += `· <b>Weight</b>: ${petData.weight} kg\n`;
+        summaryMessage += `· <b>Description</b>: ${petData.description}\n\n`;
+        summaryMessage += 'Please review the information and send <b>"yes"</b> to confirm';
         
         context.reply(summaryMessage, { parse_mode: 'HTML' });
-        context.reply('Please review the information and send <b>"yes"</b> to confirm.', { parse_mode: 'HTML' });
 
         return context.wizard.next();
     },
