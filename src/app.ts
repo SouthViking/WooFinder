@@ -1,8 +1,10 @@
 import * as dotenv from 'dotenv';
-import { Scenes, Telegraf, session } from 'telegraf';
+import { Update } from 'telegraf/typings/core/types/typegram';
+import { Context, Middleware, Scenes, Telegraf, session } from 'telegraf';
 
 import { scenes } from './scenes';
 import { handlers } from './handlers';
+import { middlewares } from './middlewares';
 import { ConversationSessionData } from './types/misc';
 import { HandlerDefinition, HandlerType } from './types/handlers';
 
@@ -11,6 +13,7 @@ dotenv.config();
 interface WooFinderBotConfig {
     botToken: string;
     handlers: HandlerDefinition[];
+    middlewares: Middleware<Context<Update>>[];
     scenes: Scenes.WizardScene<Scenes.WizardContext<ConversationSessionData>>[];
 };
 
@@ -24,6 +27,10 @@ class WooFinderBot {
 
         this.bot.use(session());
         this.bot.use(stage.middleware());
+
+        for (const middleware of this.config.middlewares) {
+            this.bot.use(middleware);
+        }
 
         this.registerHandlers(this.config.handlers);
     }
@@ -63,6 +70,7 @@ const bot = new WooFinderBot({
     botToken: process.env.BOT_TOKEN as string,
     scenes,
     handlers,
+    middlewares,
 });
 
 bot.launch();
