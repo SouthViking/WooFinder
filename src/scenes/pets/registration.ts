@@ -3,6 +3,7 @@ import { Markup, Scenes } from 'telegraf';
 import { InlineKeyboardButton } from 'telegraf/typings/core/types/typegram';
 
 import { storage } from '../../db';
+import { ensureUserExists } from '../../utils/users';
 import { sendSceneLeaveText } from '../../utils/scenes';
 import { ConversationSessionData, Full } from '../../types/misc';
 import { PetData, PetDocument, SpeciesDocument } from '../../types/models';
@@ -251,6 +252,9 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
             sendSceneLeaveText(context);
             return context.scene.leave();
         }
+
+        // Make sure the user exists in the database, so the relation with the new pet is consistent.
+        await ensureUserExists(context, storage);
 
         const petCollection = storage.getCollection<PetDocument>('pets');
         
