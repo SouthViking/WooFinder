@@ -9,6 +9,7 @@ export interface UserDocument extends Document {
     languageCode?: string 
     username?: string;
     chatId: number;
+    createdAt: number;
 };
 
 export interface PetData {
@@ -21,6 +22,7 @@ export interface PetData {
     weight: number;
     description: string;
     pictureRemoteId: string;
+    createdAt: number;
 }
 
 export type PetDocument = PetData & Document;

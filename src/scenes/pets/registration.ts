@@ -265,6 +265,7 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
             weight: petData.weight,
             description: petData.description,
             pictureRemoteId: context.scene.session.pet!.pictureRemoteId ?? '',
+            createdAt: Date.now(),
         });
 
         if (result.acknowledged) {
