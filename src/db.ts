@@ -1,4 +1,7 @@
+import * as dotenv from 'dotenv';
 import { MongoClient, Document } from 'mongodb';
+
+dotenv.config();
 
 export interface StorageConfig {
     dbName: string;
@@ -25,4 +28,4 @@ export class Storage {
 
 }
 
-export const storage = new Storage({ connectionString: 'mongodb+srv://southviking:pwd123@cluster0.6jdcmrb.mongodb.net/?retryWrites=true&w=majority', dbName: 'WooFinder' });
+export const storage = new Storage({ connectionString: process.env.DB_CONNECTION_STRING as string, dbName: 'WooFinder' });

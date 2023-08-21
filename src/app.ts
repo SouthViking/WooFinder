@@ -1,8 +1,12 @@
+import * as dotenv from 'dotenv';
+import { Scenes, Telegraf, session } from 'telegraf';
+
 import { handlers } from './handlers';
 import { ConversationSessionData } from './types/misc';
-import { Scenes, Telegraf, session } from 'telegraf';
-import { petRegistrationScene } from './scenes/pets/registration';
 import { HandlerDefinition, HandlerType } from './types/handlers';
+import { petRegistrationScene } from './scenes/pets/registration';
+
+dotenv.config();
 
 interface WooFinderBotConfig {
     botToken: string;
@@ -55,7 +59,7 @@ class WooFinderBot {
 }
 
 const bot = new WooFinderBot({
-    botToken: '6130980585:AAH1uxGjX_ZI5tQBGV5s8c7eZ-1fM1aSmCE',
+    botToken: process.env.BOT_TOKEN as string,
     handlers,
 });
 
