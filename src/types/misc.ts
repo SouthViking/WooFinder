@@ -1,10 +1,9 @@
 import { Scenes } from 'telegraf';
-import { Document } from 'telegraf/typings/core/types/typegram';
 
 import { PetData } from './models';
 
 export interface ConversationSessionData extends Scenes.WizardSessionData {
-    pet?: Partial<PetData & { pictureMetadata: Document }>;
+    pet?: Partial<PetData>;
 }
 
 export type Full<T> = {

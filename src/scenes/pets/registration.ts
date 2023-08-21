@@ -1,11 +1,11 @@
 import { ObjectId } from 'mongodb';
 import { Markup, Scenes } from 'telegraf';
-import { InlineKeyboardButton, Document } from 'telegraf/typings/core/types/typegram';
+import { InlineKeyboardButton } from 'telegraf/typings/core/types/typegram';
 
 import { storage } from '../../db';
-import { PetData, PetDocument, SpeciesDocument } from '../../types/models';
 import { sendSceneLeaveText } from '../../utils/scenes';
 import { ConversationSessionData, Full } from '../../types/misc';
+import { PetData, PetDocument, SpeciesDocument } from '../../types/models';
 import { getPetEmojiForSpeciesName, isValidBirthDate } from '../../utils/pets';
 
 const MAX_SECONDARY_PET_NAMES_ALLOWED = 5;
@@ -224,18 +224,12 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
 
     },
     async (context) => {
-        const pictureMetadata = (context.message as any).document as Document | undefined;
-        if (!pictureMetadata) {
+        if (!(context.message as any).document && !(context.message as any).photo) {
             context.reply('⚠️ You need to send a valid picture (cannot be a compressed one). Please send again.');
             return context.wizard.selectStep(8);
         }
 
-        if (!pictureMetadata.mime_type || ['image/jpeg', ' image/png'].indexOf(pictureMetadata.mime_type) === -1) {
-            context.reply('⚠️ The picture must be JPEG or PNG. Please send again.');
-            return context.wizard.selectStep(8);
-        }
-
-        context.scene.session.pet!.pictureMetadata = pictureMetadata;
+        context.scene.session.pet!.pictureRemoteId = (context.message as any).document?.file_id || (context.message as any).photo?.[0].file_id;
 
         const petData = context.scene.session.pet!;
 
@@ -270,6 +264,7 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
             size: petData.size,
             weight: petData.weight,
             description: petData.description,
+            pictureRemoteId: context.scene.session.pet!.pictureRemoteId ?? '',
         });
 
         if (result.acknowledged) {

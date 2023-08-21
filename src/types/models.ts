@@ -20,7 +20,7 @@ export interface PetData {
     size: string;
     weight: number;
     description: string;
-    picturePath?: string;
+    pictureRemoteId: string;
 }
 
 export type PetDocument = PetData & Document;
