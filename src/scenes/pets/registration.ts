@@ -184,13 +184,13 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
             return context.wizard.back();
         }
 
-        const parsedWeigth = parseFloat(answer);
-        if (isNaN(parsedWeigth) || parsedWeigth <= 0) {
+        const parsedWeight = parseFloat(answer);
+        if (isNaN(parsedWeight) || parsedWeight <= 0) {
             context.reply('⚠️ The weight must be a positive number. Please try again. ');
             return context.wizard.selectStep(6);
         }
 
-        context.scene.session.pet!.weight = parsedWeigth;
+        context.scene.session.pet!.weight = parsedWeight;
 
         let descriptionMessage = 'We are almost done! Please provide a small description about your pet.';
         descriptionMessage += '\nDescribe details that can help people to recognize your pet, such as hair, eyes/hair color, barking style, hair patterns, etc.';
@@ -237,7 +237,7 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
         summaryMessage += `⚫ <b>Secondary names</b>: ${petData.otherNames}\n`;
         summaryMessage += `⚫ <b>Date of birth</b>: ${petData.birthDate}\n`;
         summaryMessage += `⚫ <b>Size</b>: ${petData.size}\n`;
-        summaryMessage += `⚫ <b>Weigth</b>: ${petData.weight} kg\n`;
+        summaryMessage += `⚫ <b>Weight</b>: ${petData.weight} kg\n`;
         summaryMessage += `⚫ <b>Description</b>: ${petData.description}\n`;
         
         context.reply(summaryMessage, { parse_mode: 'HTML' });
