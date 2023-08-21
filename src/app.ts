@@ -1,10 +1,10 @@
 import * as dotenv from 'dotenv';
 import { Scenes, Telegraf, session } from 'telegraf';
 
+import { scenes } from './scenes';
 import { handlers } from './handlers';
 import { ConversationSessionData } from './types/misc';
 import { HandlerDefinition, HandlerType } from './types/handlers';
-import { petRegistrationScene } from './scenes/pets/registration';
 
 dotenv.config();
 
@@ -17,14 +17,14 @@ class WooFinderBot {
     private readonly bot: Telegraf<Scenes.WizardContext<ConversationSessionData>>;
 
     constructor (private readonly config: WooFinderBotConfig) {
-        this.bot = new Telegraf(config.botToken);
+        this.bot = new Telegraf(this.config.botToken);
 
-        const stage = new Scenes.Stage<Scenes.WizardContext<ConversationSessionData>>([petRegistrationScene]);
+        const stage = new Scenes.Stage<Scenes.WizardContext<ConversationSessionData>>(scenes);
 
         this.bot.use(session());
         this.bot.use(stage.middleware());
 
-        this.registerHandlers(config.handlers);
+        this.registerHandlers(this.config.handlers);
     }
 
     private registerHandlers(handlers: HandlerDefinition[]) {
