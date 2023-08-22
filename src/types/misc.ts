@@ -10,3 +10,5 @@ export interface ConversationSessionData extends Scenes.WizardSessionData {
 export type Full<T> = {
     [P in keyof T]-?: T[P];
 }
+
+export type Coordinates = { latitude: number; longitude: number; altitude?: number };

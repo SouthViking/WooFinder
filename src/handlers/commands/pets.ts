@@ -18,6 +18,9 @@ export const petsMenu: CommandHandlerDefinition = {
                 [
                     Markup.button.callback('Remove pet', 'pet_remove'),
                     Markup.button.callback('Register pet owner', 'pet_owner_register'),
+                ],
+                [
+                    Markup.button.callback('Create lost report', 'pet_create_lost_report'),
                 ]
             ]),
         });

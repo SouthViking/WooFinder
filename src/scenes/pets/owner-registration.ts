@@ -1,12 +1,12 @@
+import { ObjectId } from 'mongodb';
 import { Markup, Scenes } from 'telegraf';
-import { InlineKeyboardButton } from 'telegraf/typings/core/types/typegram';
 
 import { storage } from '../../db';
-import { PetDocument, UserDocument } from '../../types/models';
-import { sendSceneLeaveText } from '../../utils/scenes';
-import { ConversationSessionData } from '../../types/misc';
-import { ObjectId } from 'mongodb';
 import { ensureUserExists } from '../../utils/users';
+import { sendSceneLeaveText } from '../../utils/scenes';
+import { getUserPetsListKeyboard } from '../../utils/pets';
+import { ConversationSessionData } from '../../types/misc';
+import { PetDocument, UserDocument } from '../../types/models';
 
 export const petOwnerRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<ConversationSessionData>>(
     'petOwnerRegistrationScene',
@@ -17,13 +17,7 @@ export const petOwnerRegistrationScene = new Scenes.WizardScene<Scenes.WizardCon
             return context.scene.leave();
         }
 
-        const petsCollection = storage.getCollection<PetDocument>('pets');
-        const userPetsFilter = { 'owners.0': userId};
-
-        const petsButtons: InlineKeyboardButton.CallbackButton[][] = [];
-        for await (const petDoc of petsCollection.find(userPetsFilter)) {
-            petsButtons.push([Markup.button.callback(`${petDoc.name}`, petDoc._id.toString())]);
-        }
+        const petsButtons = await getUserPetsListKeyboard(userId, storage);
 
         if (petsButtons.length === 0) {
             context.reply('⚠️ You don\'t have pets registered right now.');

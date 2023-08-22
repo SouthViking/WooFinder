@@ -17,3 +17,12 @@ export const registerPetOwnerAction: ActionHandlerDefinition = {
         (context as any).scene.enter('petOwnerRegistrationScene');
     },
 };
+
+export const createLostPetReport: ActionHandlerDefinition = {
+    type: HandlerType.ACTION,
+    name: 'Lost pet report creation',
+    trigger: 'pet_create_lost_report',
+    callback: async (context) => {
+        (context as any).scene.enter('lostPetReportCreationScene');
+    },
+};

@@ -1,3 +1,8 @@
+import { Markup } from 'telegraf';
+import { InlineKeyboardButton } from 'telegraf/typings/core/types/typegram';
+
+import { Storage } from '../db';
+import { PetDocument } from '../types/models';
 
 const MIN_ALLOWED_BIRTHDATE = '2000-01-01';
 const MIN_ALLOWED_BIRTHDATE_TIMESTAMP = Date.parse(MIN_ALLOWED_BIRTHDATE);
@@ -22,4 +27,22 @@ export const isValidBirthDate = (birthDate: number): {
     }
 
     return { isValid: true };
+};
+
+/**
+ * Returns a Telegram keyboard based on the stored pets for the given `userId`.
+ * Every button contains the ID of the pet as value.
+ * @param userId The ID of the target user.
+ * @param storage The storage object to get the collection of pets.
+ */
+export const getUserPetsListKeyboard = async (userId: number, storage: Storage) => {
+    const petsCollection = storage.getCollection<PetDocument>('pets');
+    const userPetsFilter = { 'owners.0': userId};
+
+    const keyboard: InlineKeyboardButton.CallbackButton[][] = [];
+    for await (const petDoc of petsCollection.find(userPetsFilter)) {
+        keyboard.push([Markup.button.callback(`${petDoc.name}`, petDoc._id.toString())]);
+    }
+
+    return keyboard;
 };
