@@ -3,8 +3,7 @@ import { Markup, Scenes } from 'telegraf';
 import { InlineKeyboardButton } from 'telegraf/typings/core/types/typegram';
 
 import { storage } from '../../db';
-import { ConversationSessionData, Full } from '../../types/misc';
-import { PetData, PetDocument, SpeciesDocument } from '../../types/models';
+import { ConversationSessionData, Full, PetData, PetDocument, SpeciesDocument } from '../../types';
 import { ensureUserExists, getPetEmojiForSpeciesName, isValidBirthDate, sendSceneLeaveText } from '../../utils';
 
 const MAX_SECONDARY_PET_NAMES_ALLOWED = 5;

@@ -1,6 +1,6 @@
 import { Markup } from 'telegraf';
 
-import { CommandHandlerDefinition, HandlerType } from '../../types/handlers';
+import { CommandHandlerDefinition, HandlerType } from '../../types';
 
 export const petsMenu: CommandHandlerDefinition = {
     type: HandlerType.COMMAND,

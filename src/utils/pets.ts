@@ -2,7 +2,7 @@ import { Markup } from 'telegraf';
 import { InlineKeyboardButton } from 'telegraf/typings/core/types/typegram';
 
 import { Storage } from '../db';
-import { PetDocument } from '../types/models';
+import { PetDocument } from '../types';
 
 const MIN_ALLOWED_BIRTHDATE = '2000-01-01';
 const MIN_ALLOWED_BIRTHDATE_TIMESTAMP = Date.parse(MIN_ALLOWED_BIRTHDATE);

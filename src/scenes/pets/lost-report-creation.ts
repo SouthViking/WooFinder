@@ -2,9 +2,7 @@ import { ObjectId } from 'mongodb';
 import { Markup, Scenes } from 'telegraf';
 
 import { storage } from '../../db';
-
-import { LostPetReportDocument } from '../../types/models';
-import { ConversationSessionData, Coordinates } from '../../types/misc';
+import { ConversationSessionData, Coordinates, LostPetReportDocument } from '../../types';
 import { ensureUserExists, getUserPetsListKeyboard, sendSceneLeaveText } from '../../utils';
 
 export const lostPetReportCreationScene = new Scenes.WizardScene<Scenes.WizardContext<ConversationSessionData>>(
