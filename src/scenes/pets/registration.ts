@@ -3,11 +3,9 @@ import { Markup, Scenes } from 'telegraf';
 import { InlineKeyboardButton } from 'telegraf/typings/core/types/typegram';
 
 import { storage } from '../../db';
-import { ensureUserExists } from '../../utils/users';
-import { sendSceneLeaveText } from '../../utils/scenes';
 import { ConversationSessionData, Full } from '../../types/misc';
 import { PetData, PetDocument, SpeciesDocument } from '../../types/models';
-import { getPetEmojiForSpeciesName, isValidBirthDate } from '../../utils/pets';
+import { ensureUserExists, getPetEmojiForSpeciesName, isValidBirthDate, sendSceneLeaveText } from '../../utils';
 
 const MAX_SECONDARY_PET_NAMES_ALLOWED = 5;
 export const PET_REGISTRATION_SCENE_ID = 'petRegistrationScene';

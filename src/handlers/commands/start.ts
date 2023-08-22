@@ -1,5 +1,5 @@
 import { storage } from '../../db';
-import { ensureUserExists } from '../../utils/users';
+import { ensureUserExists } from '../../utils';
 import { CommandHandlerDefinition, HandlerType } from '../../types/handlers';
 
 export const startHandlerDef: CommandHandlerDefinition = {

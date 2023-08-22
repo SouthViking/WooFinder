@@ -2,11 +2,10 @@ import { ObjectId } from 'mongodb';
 import { Markup, Scenes } from 'telegraf';
 
 import { storage } from '../../db';
-import { ensureUserExists } from '../../utils/users';
-import { sendSceneLeaveText } from '../../utils/scenes';
-import { getUserPetsListKeyboard } from '../../utils/pets';
+
 import { ConversationSessionData } from '../../types/misc';
 import { PetDocument, UserDocument } from '../../types/models';
+import { ensureUserExists, getUserPetsListKeyboard, sendSceneLeaveText } from '../../utils';
 
 export const petOwnerRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<ConversationSessionData>>(
     'petOwnerRegistrationScene',
