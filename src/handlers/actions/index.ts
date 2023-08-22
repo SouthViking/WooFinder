@@ -1,5 +1,5 @@
-import { registerPetAction } from "./pets";
-import { ActionHandlerDefinition } from "../../types/handlers";
+import { registerPetAction } from './pets';
+import { ActionHandlerDefinition } from '../../types/handlers';
 
 export const actionHandlers: ActionHandlerDefinition[] = [
     registerPetAction,

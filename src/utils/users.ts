@@ -1,7 +1,7 @@
 import { Context } from 'telegraf';
 
-import { Storage } from "../db";
-import { UserDocument } from "../types/models";
+import { Storage } from '../db';
+import { UserDocument } from '../types/models';
 
 export const ensureUserExists = async (context: Context, storage: Storage) => {
     const telegramUserData = context.from;

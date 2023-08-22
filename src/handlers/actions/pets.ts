@@ -1,4 +1,4 @@
-import { ActionHandlerDefinition, HandlerType } from "../../types/handlers";
+import { ActionHandlerDefinition, HandlerType } from '../../types/handlers';
 
 export const registerPetAction: ActionHandlerDefinition = {
     type: HandlerType.ACTION,
