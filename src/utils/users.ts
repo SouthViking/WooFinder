@@ -11,19 +11,19 @@ export const ensureUserExists = async (context: Context, storage: Storage) => {
     }
 
     const usersCollection = storage.getCollection<UserDocument>('users');
-    const userRecord = await usersCollection.findOne({ _id: telegramUserData.id });
-    if (!userRecord) {
-        await usersCollection.insertOne({
-            _id: telegramUserData.id,
+
+    // Upsert the user, since their information can change. Only store 'createdAt' the first time without replacing it.
+    await usersCollection.updateOne({ _id: telegramUserData.id }, {
+        $set: {
             firstName: telegramUserData.first_name,
             lastName: telegramUserData.last_name,
             isBot: telegramUserData.is_bot,
             isPremium: telegramUserData.is_premium ?? false,
             languageCode: telegramUserData.language_code,
             username: telegramUserData.username,
-            chatId: context.chat!.id,
+        },
+        $setOnInsert: {
             createdAt: Date.now(),
-        });
-    }
-
+        },
+    }, { upsert: true });
 };

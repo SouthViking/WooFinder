@@ -8,7 +8,6 @@ export interface UserDocument extends Document {
     isPremium: boolean;
     languageCode?: string 
     username?: string;
-    chatId: number;
     createdAt: number;
 };
 
