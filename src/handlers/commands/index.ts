@@ -5,4 +5,4 @@ import { CommandHandlerDefinition } from '../../types/handlers';
 export const commandHandlers: CommandHandlerDefinition[] = [
     startHandlerDef,
     petsMenu,
-]
+];

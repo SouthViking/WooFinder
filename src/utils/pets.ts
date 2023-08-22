@@ -12,7 +12,7 @@ export const getPetEmojiForSpeciesName = (species: string) => {
         'dog': '🐶',
         'cat': '🐱',
     }[species.toLowerCase()];
-}
+};
 
 export const isValidBirthDate = (birthDate: number): {
     isValid: boolean;

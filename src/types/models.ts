@@ -1,4 +1,5 @@
 import { Document, ObjectId } from 'mongodb';
+
 import { Coordinates } from './misc';
 
 export interface UserDocument extends Document {
@@ -23,13 +24,13 @@ export interface PetData {
     description: string;
     pictureRemoteId: string;
     createdAt: number;
-}
+};
 
 export type PetDocument = PetData & Document;
 
 export interface SpeciesDocument extends Document {
     name: string;
-}
+};
 
 export interface LostPetReportData {
     petId: ObjectId;

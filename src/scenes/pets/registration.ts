@@ -280,4 +280,4 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
 
         return context.scene.leave();
     },
-)
+);
