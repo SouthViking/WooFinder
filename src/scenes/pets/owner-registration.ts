@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ObjectId } from 'mongodb';
 import { Markup, Scenes } from 'telegraf';
 
@@ -80,7 +81,7 @@ export const petOwnerRegistrationScene = new Scenes.WizardScene<Scenes.WizardCon
     async (context) => {
         await ensureUserExists(context, storage);
 
-        let newOwnerIds = (context.message as any).text as string | undefined;
+        const newOwnerIds = (context.message as any).text as string | undefined;
         if (!newOwnerIds) {
             context.reply('⚠️ Please provide the IDs of new owners to be linked to the current pet.');
             return context.wizard.selectStep(2);

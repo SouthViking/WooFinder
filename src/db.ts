@@ -6,7 +6,7 @@ dotenv.config();
 export interface StorageConfig {
     dbName: string;
     connectionString: string;
-};
+}
 
 export class Storage {
     public dbName: string;

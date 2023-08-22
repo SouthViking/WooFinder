@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ObjectId } from 'mongodb';
 import { Markup, Scenes } from 'telegraf';
 import { InlineKeyboardButton } from 'telegraf/typings/core/types/typegram';

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ActionHandlerDefinition, HandlerType } from '../../types';
 
 export const registerPetAction: ActionHandlerDefinition = {

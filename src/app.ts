@@ -15,7 +15,7 @@ interface WooFinderBotConfig {
     handlers: HandlerDefinition[];
     middlewares: Middleware<Context<Update>>[];
     scenes: Scenes.WizardScene<Scenes.WizardContext<ConversationSessionData>>[];
-};
+}
 
 class WooFinderBot {
     private readonly bot: Telegraf<Scenes.WizardContext<ConversationSessionData>>;

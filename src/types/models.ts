@@ -11,7 +11,7 @@ export interface UserDocument extends Document {
     languageCode?: string 
     username?: string;
     createdAt: number;
-};
+}
 
 export interface PetData {
     owners: number[];
@@ -24,13 +24,13 @@ export interface PetData {
     description: string;
     pictureRemoteId: string;
     createdAt: number;
-};
+}
 
 export type PetDocument = PetData & Document;
 
 export interface SpeciesDocument extends Document {
     name: string;
-};
+}
 
 export interface LostPetReportData {
     petId: ObjectId;
@@ -38,6 +38,6 @@ export interface LostPetReportData {
     lastSeen: Coordinates;
     createdAt: number;
     updatedAt?: number;
-};
+}
 
 export type LostPetReportDocument = LostPetReportData & Document;
