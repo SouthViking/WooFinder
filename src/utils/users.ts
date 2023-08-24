@@ -3,6 +3,11 @@ import { Context } from 'telegraf';
 import { Storage } from '../db';
 import { UserDocument } from '../types/models';
 
+/**
+ * Executes an unpsert operation on the user record. If it is not created, then also adds the `createdAt` field.
+ * @param context The Telegram bot context to get the user ID.
+ * @param storage The storage definition to get the collection of users.
+ */
 export const ensureUserExists = async (context: Context, storage: Storage) => {
     const telegramUserData = context.from;
     if (!telegramUserData) {

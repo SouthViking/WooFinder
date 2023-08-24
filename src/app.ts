@@ -8,12 +8,16 @@ import { middlewares } from './middlewares';
 import { ConversationSessionData } from './types/misc';
 import { HandlerDefinition, HandlerType } from './types/handlers';
 
+// Since some of the main credentials exist within .env files, this allows to use them.
 dotenv.config();
 
 interface WooFinderBotConfig {
     botToken: string;
+    /** The aggregation of all the available handlers in the bot to be registered in it. */
     handlers: HandlerDefinition[];
+    /** The aggregation of all the available middlewares to register.  */
     middlewares: Middleware<Context<Update>>[];
+    /** The aggregation of all the scenes to register. (Scenes can be seen as 'forms', providing interaction with the user in both sides) */
     scenes: Scenes.WizardScene<Scenes.WizardContext<ConversationSessionData>>[];
 }
 
@@ -25,6 +29,7 @@ class WooFinderBot {
 
         const stage = new Scenes.Stage<Scenes.WizardContext<ConversationSessionData>>(this.config.scenes);
 
+        // Session is needed, so the data can be stored and passed through the different steps of the scenes.
         this.bot.use(session());
         this.bot.use(stage.middleware());
 

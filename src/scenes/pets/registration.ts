@@ -13,6 +13,7 @@ export const PET_REGISTRATION_SCENE_ID = 'petRegistrationScene';
 // Definition of the scene with the steps that will be executed whenever a user starts a new pet creation.
 export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<ConversationSessionData>>(
     PET_REGISTRATION_SCENE_ID,
+    // [Step 0] Entry point: The step beings whenever the user selects the option to add a new pet from the pets menu.
     async (context) => {
         context.scene.session.pet = {};
         context.scene.session.pet.owners = [context.from!.id];
@@ -52,6 +53,7 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
 
         return context.wizard.next();
     },
+    // [Step 1] Species selection: In this step the user has to provide one of the available species for the target pet.
     async (context) => {
         const speciesId = (context.update as any).callback_query?.data as string | undefined;
         if (!speciesId) {
@@ -74,6 +76,7 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
 
         return context.wizard.next();
     },
+    // [Step 2] Name: In this step the user has to provide the name of the pet.
     async (context) => {
         const answer = (context.message as any).text as string | undefined;
         if (!answer) {
@@ -98,6 +101,7 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
 
         return context.wizard.next();
     },
+    // [Step 3] Other names: In this step (which is also optional) the user can provide some other names for the pet.
     async (context) => {
         const answer = (context.message as any).text as string | undefined;
         if (!answer) {
@@ -120,6 +124,7 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
 
         return context.wizard.next();
     },
+    // [Step 4] Birthdate: In this step the user has to provide a date of birth that have to be within a valid range.
     async (context) => {
         const answer = (context.message as any).text as string | undefined;
         if (!answer) {
@@ -156,6 +161,7 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
 
         return context.wizard.next();
     },
+    // [Step 5] Size selection: The user has to enter one of the available options listed in the menu above.
     async (context) => {
         const petSize = (context.update as any).callback_query?.data as string | undefined;
         if (!petSize) {
@@ -169,6 +175,7 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
 
         return context.wizard.next();
     },
+    // [Step 6] Weight: In this step the user has to provide the pet's weight.
     async (context) => {
         const answer = (context.message as any).text as string | undefined;
         if (!answer) {
@@ -198,6 +205,7 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
 
         return context.wizard.next();
     },
+    // [Step 7] Description: In this step the user has to provide a description for the pet.
     async (context) => {
         const answer = (context.message as any).text as string;
         if (!answer) {
@@ -222,12 +230,14 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
         return context.wizard.next();
 
     },
+    // [Step 8] Picture: This is the last step. The user must provide a picture of the pet. The picture is uploaded to Telegram and a new pet record is created.
     async (context) => {
         if (!(context.message as any).document && !(context.message as any).photo) {
             context.reply('⚠️ You need to send a valid picture (cannot be a compressed one). Please send again.');
             return context.wizard.selectStep(8);
         }
 
+        // File ID represents the ID of the picture file that is stored in Telegram, which is accessible via an API.
         context.scene.session.pet!.pictureRemoteId = (context.message as any).document?.file_id || (context.message as any).photo?.[0].file_id;
 
         const petData = context.scene.session.pet!;
@@ -266,6 +276,7 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
             size: petData.size,
             weight: petData.weight,
             description: petData.description,
+            // Storing the remote File ID, so it can be fetched from the Telegram API when needed.
             pictureRemoteId: context.scene.session.pet!.pictureRemoteId ?? '',
             createdAt: Date.now(),
         });

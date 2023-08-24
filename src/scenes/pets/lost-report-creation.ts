@@ -6,8 +6,10 @@ import { storage } from '../../db';
 import { ConversationSessionData, Coordinates, LostPetReportDocument } from '../../types';
 import { ensureUserExists, getUserPetsListKeyboard, sendSceneLeaveText } from '../../utils';
 
+// Definition of the dialog with the user to create a new lost pet report. 
 export const lostPetReportCreationScene = new Scenes.WizardScene<Scenes.WizardContext<ConversationSessionData>>(
-    'lostPetReportCreationScene',
+    'lostPetReportCreationScene', 
+    // [Step 0] Entry point: The step begins whenever the user selects the option to create a new report from the reports menu.
     async (context) => {
         const userId = context.from?.id;
         if (!userId) {
@@ -29,6 +31,7 @@ export const lostPetReportCreationScene = new Scenes.WizardScene<Scenes.WizardCo
 
         return context.wizard.next();
     },
+    // [Step 1] Pet selection: Step in which the selected pet is detected and verified.
     async (context) => {
         const petId = (context.update as any).callback_query?.data as string | undefined;
         if (!petId) {
@@ -55,6 +58,7 @@ export const lostPetReportCreationScene = new Scenes.WizardScene<Scenes.WizardCo
         context.reply('Please send us the location (can be an estimation) where your pet got lost.');
         return context.wizard.next();
     },
+    // [Step 2] Location selection: In this step the user has to provide a valid Telegram location and it also creates the report.
     async (context) => {
         const lastSeenCoordinates = (context.update as any).message?.location as Coordinates | undefined;
         if (!lastSeenCoordinates) {
@@ -73,6 +77,7 @@ export const lostPetReportCreationScene = new Scenes.WizardScene<Scenes.WizardCo
         const lostPetReportCollecion = storage.getCollection<LostPetReportDocument>('reports');
         const result = await lostPetReportCollecion.insertOne({
             petId: new ObjectId(context.scene.session.targetId),
+            // This format of coordinates allows to use the Geospatial queries that MongoDB provides.
             lastSeen: {
                 type: 'Point',
                 coordinates: [lastSeenCoordinates.longitude, lastSeenCoordinates.latitude],

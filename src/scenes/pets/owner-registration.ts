@@ -6,8 +6,10 @@ import { storage } from '../../db';
 import { ConversationSessionData, PetDocument, UserDocument } from '../../types';
 import { ensureUserExists, getUserPetsListKeyboard, sendSceneLeaveText } from '../../utils';
 
+// Definition of the dialog with the user to add secondary owners to a specific pet.
 export const petOwnerRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<ConversationSessionData>>(
     'petOwnerRegistrationScene',
+    // [Step 0] Entry point: The step begins whenever the user selects the option to add an owner from the pets menu.
     async (context) => {
         const userId = context.from?.id;
         if (!userId) {
@@ -28,6 +30,7 @@ export const petOwnerRegistrationScene = new Scenes.WizardScene<Scenes.WizardCon
 
         return context.wizard.next();
     },
+    // [Step 1] Pet selection: Step in which the selected pet is detected and verified.
     async (context) => {
         const userId = context.from?.id;
         const petId = (context.update as any).callback_query?.data as string | undefined;
@@ -78,6 +81,8 @@ export const petOwnerRegistrationScene = new Scenes.WizardScene<Scenes.WizardCon
 
         return context.wizard.next();
     },
+    // [Step 2] New owners definition: In this step the user has entered the text with the new owner IDs.
+    // This step also verifies if the IDs can be stored and adds them to the list of owners for the pet that was specified.
     async (context) => {
         await ensureUserExists(context, storage);
 

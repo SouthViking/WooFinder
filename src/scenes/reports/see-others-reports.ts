@@ -14,12 +14,15 @@ const MAX_SEARCH_RADIUS_KM = 0.5;
 TimeAgo.addDefaultLocale(en)
 const timeAgo = new TimeAgo('en-US');
 
+// Definition of the dialog with the user to see another's lost pet reports.
 export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.WizardContext<ConversationSessionData>>(
     'seeOthersLostPetReportsScene',
+    // [Step 0] Entry point: The step begins whenever the user selects the option to see another's reports from the reports menu.
     async (context) => {
         context.reply('🔎🐾 Send a location to see the list of reports near to it.');
         return context.wizard.next();
     },
+    // [Step 1] Location: The user must provide a location. It can their own location or any other place of interest.
     async (context) => {
         const userId = context.from?.id;
         if (!userId) {
@@ -48,6 +51,8 @@ export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.Wizard
         }
 
         const reportsCollection = storage.getCollection<LostPetReportDocument>('reports');
+        // This query allows to get the active reports of lost pets within a certain radius from the provided location as the center.
+        // TODO: DRY this query (also any other) in a util, so it can be easily reused.
         const searchQuery: Filter<LostPetReportDocument> = {
             $and: [
                 {
