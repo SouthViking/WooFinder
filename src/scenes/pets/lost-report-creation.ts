@@ -73,7 +73,10 @@ export const lostPetReportCreationScene = new Scenes.WizardScene<Scenes.WizardCo
         const lostPetReportCollecion = storage.getCollection<LostPetReportDocument>('reports');
         const result = await lostPetReportCollecion.insertOne({
             petId: new ObjectId(context.scene.session.targetId),
-            lastSeen: lastSeenCoordinates,
+            lastSeen: {
+                type: 'Point',
+                coordinates: [lastSeenCoordinates.longitude, lastSeenCoordinates.latitude],
+            },
             createdAt: Date.now(),
             isActive: true,
         });

@@ -1,7 +1,5 @@
 import { Document, ObjectId } from 'mongodb';
 
-import { Coordinates } from './misc';
-
 export interface UserDocument extends Document {
     _id: number;
     firstName?: string;
@@ -35,7 +33,10 @@ export interface SpeciesDocument extends Document {
 export interface LostPetReportData {
     petId: ObjectId;
     isActive: boolean;
-    lastSeen: Coordinates;
+    lastSeen: {
+        type: string;
+        coordinates: [number, number] // longitude, latitude
+    }
     createdAt: number;
     updatedAt?: number;
 }

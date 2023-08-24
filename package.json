@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "dotenv": "^16.3.1",
+    "javascript-time-ago": "^2.5.9",
     "mongodb": "^5.7.0",
     "telegraf": "^4.12.2"
   }
