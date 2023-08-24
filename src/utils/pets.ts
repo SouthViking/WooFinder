@@ -2,7 +2,7 @@ import { Markup } from 'telegraf';
 import { InlineKeyboardButton } from 'telegraf/typings/core/types/typegram';
 
 import { Storage } from '../db';
-import { PetDocument } from '../types';
+import { PetData, PetDocument } from '../types';
 
 const MIN_ALLOWED_BIRTHDATE = '2000-01-01';
 const MIN_ALLOWED_BIRTHDATE_TIMESTAMP = Date.parse(MIN_ALLOWED_BIRTHDATE);
@@ -46,3 +46,16 @@ export const getUserPetsListKeyboard = async (userId: number, storage: Storage) 
 
     return keyboard;
 };
+
+export const generatePetSummaryHTMLMessage = (petData: PetData) => {
+    let summaryMessage = `🐾 Information about <b>${petData.name}</b> 🐾\n\n`;
+    if (petData.otherNames) {
+        summaryMessage += `· <b>Secondary names</b>: ${petData.otherNames.join(' - ')}\n`;
+    }
+    summaryMessage += `· <b>Date of birth</b>: ${new Date(petData.birthDate)}\n`;
+    summaryMessage += `· <b>Size</b>: ${petData.size}\n`;
+    summaryMessage += `· <b>Weight</b>: ${petData.weight} kg\n`;
+    summaryMessage += `· <b>Description</b>: ${petData.description}\n`;
+
+    return summaryMessage;
+}

@@ -5,7 +5,7 @@ import { InlineKeyboardButton } from 'telegraf/typings/core/types/typegram';
 
 import { storage } from '../../db';
 import { ConversationSessionData, Full, PetData, PetDocument, SpeciesDocument } from '../../types';
-import { ensureUserExists, getPetEmojiForSpeciesName, isValidBirthDate, sendSceneLeaveText } from '../../utils';
+import { ensureUserExists, generatePetSummaryHTMLMessage, getPetEmojiForSpeciesName, isValidBirthDate, sendSceneLeaveText } from '../../utils';
 
 const MAX_SECONDARY_PET_NAMES_ALLOWED = 5;
 export const PET_REGISTRATION_SCENE_ID = 'petRegistrationScene';
@@ -242,12 +242,7 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
 
         const petData = context.scene.session.pet!;
 
-        let summaryMessage = `🐾 <b>${petData.name}'s record</b> 🐾\n`;
-        summaryMessage += `· <b>Secondary names</b>: ${petData.otherNames}\n`;
-        summaryMessage += `· <b>Date of birth</b>: ${petData.birthDate}\n`;
-        summaryMessage += `· <b>Size</b>: ${petData.size}\n`;
-        summaryMessage += `· <b>Weight</b>: ${petData.weight} kg\n`;
-        summaryMessage += `· <b>Description</b>: ${petData.description}\n\n`;
+        let summaryMessage = generatePetSummaryHTMLMessage(petData as Full<PetData>);
         summaryMessage += 'Please review the information and send <b>"yes"</b> to confirm';
         
         context.reply(summaryMessage, { parse_mode: 'HTML' });
