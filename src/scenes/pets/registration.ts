@@ -2,7 +2,7 @@
 import { ObjectId } from 'mongodb';
 import { Markup, Scenes } from 'telegraf';
 
-import { storage } from '../../db';
+import { AppCollections, storage } from '../../db';
 import { ConversationSessionData, Full, KeyboardButtonData, PetData, PetDocument, SpeciesDocument } from '../../types';
 import { ensureUserExists, generatePetSummaryHTMLMessage, getPetEmojiForSpeciesName, isValidBirthDate, sendSceneLeaveText } from '../../utils';
 import { generateTelegramKeyboardWithButtons } from '../../utils/misc';
@@ -18,7 +18,7 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
         context.scene.session.pet = {};
         context.scene.session.pet.owners = [context.from!.id];
 
-        const species = await storage.findAndGetAll<SpeciesDocument>('species', {});
+        const species = await storage.findAndGetAll<SpeciesDocument>(AppCollections.SPECIES, {});
         if (species.length === 0) {
             context.reply('⚠️ There are no species available right now for pet registration. Please try again later!');
             sendSceneLeaveText(context);
@@ -250,7 +250,7 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
         // Make sure the user exists in the database, so the relation with the new pet is consistent.
         await ensureUserExists(context, storage);
 
-        const petCollection = storage.getCollection<PetDocument>('pets');
+        const petCollection = storage.getCollection<PetDocument>(AppCollections.PETS);
         
         const petData = context.scene.session.pet as Full<PetData>;
         const result = await petCollection.insertOne({

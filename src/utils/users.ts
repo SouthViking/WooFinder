@@ -1,7 +1,7 @@
 import { Context } from 'telegraf';
 
-import { Storage } from '../db';
 import { UserDocument } from '../types/models';
+import { AppCollections, Storage } from '../db';
 
 /**
  * Executes an unpsert operation on the user record. If it is not created, then also adds the `createdAt` field.
@@ -15,8 +15,8 @@ export const ensureUserExists = async (context: Context, storage: Storage) => {
         throw new Error('Telegram user data not defined. Cannot ensure if user exists.');
     }
 
-    const usersCollection = storage.getCollection<UserDocument>('users');
-
+    // TODO: Wrap the updateOne method within the storage class.
+    const usersCollection = storage.getCollection<UserDocument>(AppCollections.USERS);
     // Upsert the user, since their information can change. Only store 'createdAt' the first time without replacing it.
     await usersCollection.updateOne({ _id: telegramUserData.id }, {
         $set: {

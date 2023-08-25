@@ -2,7 +2,7 @@
 import { ObjectId } from 'mongodb';
 import { Markup, Scenes } from 'telegraf';
 
-import { storage } from '../../db';
+import { AppCollections, storage } from '../../db';
 import { ConversationSessionData, Coordinates, LostPetReportDocument } from '../../types';
 import { ensureUserExists, getUserPetsListKeyboard, sendSceneLeaveText } from '../../utils';
 
@@ -45,7 +45,7 @@ export const lostPetReportCreationScene = new Scenes.WizardScene<Scenes.WizardCo
             return context.wizard.selectStep(1);
         }
 
-        const reportsCollection = storage.getCollection<LostPetReportDocument>('reports');
+        const reportsCollection = storage.getCollection<LostPetReportDocument>(AppCollections.REPORTS);
         if ((await reportsCollection.countDocuments({ petId: new ObjectId(petId), isActive: true }) !== 0)) {
             context.reply('⚠️ The selected pet already has an active report. You can update it by using the <b>/reports</b> command.', {
                 parse_mode: 'HTML',
@@ -74,7 +74,7 @@ export const lostPetReportCreationScene = new Scenes.WizardScene<Scenes.WizardCo
 
        await ensureUserExists(context, storage);
 
-        const lostPetReportCollecion = storage.getCollection<LostPetReportDocument>('reports');
+        const lostPetReportCollecion = storage.getCollection<LostPetReportDocument>(AppCollections.REPORTS);
         const result = await lostPetReportCollecion.insertOne({
             petId: new ObjectId(context.scene.session.targetId),
             // This format of coordinates allows to use the Geospatial queries that MongoDB provides.

@@ -8,6 +8,13 @@ export interface StorageConfig {
     connectionString: string;
 }
 
+export enum AppCollections {
+    USERS = 'users',
+    PETS = 'pets',
+    REPORTS = 'reports',
+    SPECIES = 'species',
+}
+
 export class Storage {
     public dbName: string;
     private dbClient: MongoClient;
@@ -35,6 +42,12 @@ export class Storage {
         }
 
         return results;
+    }
+
+    public async findOne<T extends Document>(collectionName: string, query: Filter<T>, options?: FindOptions): Promise<WithId<T> | null> {
+        const collection = this.getCollection<T>(collectionName);
+        
+        return await collection.findOne(query, options);
     }
 }
 

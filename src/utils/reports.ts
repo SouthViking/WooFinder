@@ -1,12 +1,12 @@
+import { Markup } from 'telegraf';
 import TimeAgo from 'javascript-time-ago';
 import { Filter, ObjectId } from 'mongodb';
 import en from 'javascript-time-ago/locale/en';
 
-import { Storage } from '../db';
+import { AppCollections, Storage } from '../db';
 import { getPetEmojiForSpeciesName } from './pets';
 import { generateTelegramKeyboardWithButtons } from './misc';
 import { Coordinates, KeyboardButtonData, LostPetReportDocument, PetDocument, SpeciesDocument } from '../types';
-import { Markup } from 'telegraf';
 
 TimeAgo.addLocale(en)
 const timeAgo = new TimeAgo('en-US');
@@ -35,7 +35,7 @@ interface LostPetKeyboardOptions {
  */
 export const getLostPetsKeyboard = async (storage: Storage, userId: number, locationInfo: GeoLocationInfo, options: LostPetKeyboardOptions) => {
     // Find the pets where the owner is the current user ID.
-    const userPetsIds = (await storage.findAndGetAll<PetDocument>('pets', { 'owners.0': userId }, { projection: { _id: 1 } })).map(petDoc => (petDoc._id));
+    const userPetsIds = (await storage.findAndGetAll<PetDocument>(AppCollections.PETS, { 'owners.0': userId }, { projection: { _id: 1 } })).map(petDoc => (petDoc._id));
 
     // Query to find the reports that are near to the provided location in a certain radius.
     const searchQuery: Filter<LostPetReportDocument> = {
@@ -60,7 +60,7 @@ export const getLostPetsKeyboard = async (storage: Storage, userId: number, loca
     // Map of the reports dates to display it with the name in the keyboard (with timeago format)
     const reportedDatesMap: Record<string, number> = {};
 
-    const reportsFound = await storage.findAndGetAll('reports', searchQuery);
+    const reportsFound = await storage.findAndGetAll(AppCollections.REPORTS, searchQuery);
     for (const reportDoc of reportsFound) {
         targetPetIds.push(reportDoc.petId);
         reportedDatesMap[reportDoc.petId.toString()]  = reportDoc.updatedAt ?? reportDoc.createdAt;
@@ -68,12 +68,12 @@ export const getLostPetsKeyboard = async (storage: Storage, userId: number, loca
 
     const petSpeciesMap: Record<string, string> = {};
 
-    const species = await storage.findAndGetAll<SpeciesDocument>('species', {});
+    const species = await storage.findAndGetAll<SpeciesDocument>(AppCollections.SPECIES, {});
     for (const speciesDoc of species) {
         petSpeciesMap[speciesDoc._id.toString()] = getPetEmojiForSpeciesName(speciesDoc.name);
     }
 
-    const targetPets: KeyboardButtonData[] = (await storage.findAndGetAll<PetDocument>('pets', { _id: { $in: targetPetIds } })).map(petDoc => {
+    const targetPets: KeyboardButtonData[] = (await storage.findAndGetAll<PetDocument>(AppCollections.PETS, { _id: { $in: targetPetIds } })).map(petDoc => {
         const petEmoji = petSpeciesMap[petDoc.species.toString()];
         const elapsedTime = reportedDatesMap[petDoc._id.toString()];
         const reportedTimeAgo = timeAgo.format(new Date(elapsedTime));

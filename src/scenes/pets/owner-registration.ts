@@ -2,7 +2,7 @@
 import { ObjectId } from 'mongodb';
 import { Markup, Scenes } from 'telegraf';
 
-import { storage } from '../../db';
+import { AppCollections, storage } from '../../db';
 import { ConversationSessionData, PetDocument, UserDocument } from '../../types';
 import { ensureUserExists, getUserPetsListKeyboard, sendSceneLeaveText } from '../../utils';
 
@@ -45,9 +45,7 @@ export const petOwnerRegistrationScene = new Scenes.WizardScene<Scenes.WizardCon
             return context.wizard.selectStep(1);
         }
 
-        const usersCollection = storage.getCollection<UserDocument>('users');
-        const petsCollection = storage.getCollection<PetDocument>('pets');
-        const petDoc = await petsCollection.findOne({ _id: new ObjectId(petId) });
+        const petDoc = await storage.findOne<PetDocument>(AppCollections.PETS, { _id: new ObjectId(petId) });
         if (!petDoc) {
             context.reply('⚠️ The pet was removed. Operation cancelled.');
             return context.scene.leave();
@@ -59,7 +57,7 @@ export const petOwnerRegistrationScene = new Scenes.WizardScene<Scenes.WizardCon
         let secondaryOwnersMessage = 'These are the current secondary owners that have been linked:\n\n';
 
         for (const ownerId of petDoc.owners) {
-            const userDoc = await usersCollection.findOne({ _id: ownerId });
+            const userDoc = await storage.findOne<UserDocument>(AppCollections.USERS, { _id: ownerId })
             if (!userDoc) {
                 // TODO: Fix the owners list in the pet document by removing the ones that no longer exist.
                 continue;
@@ -121,7 +119,7 @@ export const petOwnerRegistrationScene = new Scenes.WizardScene<Scenes.WizardCon
             return context.scene.leave();
         }
 
-        const petsCollection = storage.getCollection<PetDocument>('pets');
+        const petsCollection = storage.getCollection<PetDocument>(AppCollections.PETS);
         const result = await petsCollection.updateOne({ _id: new ObjectId(context.scene.session.targetId) }, {
             $set: {
                 owners: [...(context.scene.session.pet?.owners ?? []), ...ownerIdsToLink],

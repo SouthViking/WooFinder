@@ -5,7 +5,7 @@ import { Markup, Scenes } from 'telegraf';
 import en from 'javascript-time-ago/locale/en'
 import { Contact } from 'telegraf/typings/core/types/typegram';
 
-import { storage } from '../../db';
+import { AppCollections, storage } from '../../db';
 import { GeoLocationInfo, getLostPetsKeyboard } from '../../utils/reports';
 import { generatePetSummaryHTMLMessage, sendSceneLeaveText } from '../../utils';
 import { ConversationSessionData, Coordinates, LostPetReportDocument, PetDocument } from '../../types';
@@ -86,8 +86,7 @@ export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.Wizard
             return context.scene.reenter();
         }
         
-        const petsCollection = storage.getCollection<PetDocument>('pets');
-        const petDoc = await petsCollection.findOne({ _id: new ObjectId(petId) });
+        const petDoc = await storage.findOne<PetDocument>(AppCollections.PETS, { _id: new ObjectId(petId) });
         if (!petDoc) {
             await context.reply('⚠️ The pet was not found. Please try again.');
             sendSceneLeaveText(context);
@@ -96,8 +95,7 @@ export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.Wizard
 
         context.scene.session.pet = petDoc;
 
-        const reportsCollection = storage.getCollection<LostPetReportDocument>('reports');
-        const activeReport = await reportsCollection.findOne({ petId: new ObjectId(petId), isActive: true }); 
+        const activeReport = await storage.findOne<LostPetReportDocument>(AppCollections.REPORTS, { petId: new ObjectId(petId), isActive: true })
         if (!activeReport) {
             await context.reply('⚠️ The lost report of the pet was not found. Please try again.');
             sendSceneLeaveText(context);
