@@ -1,5 +1,5 @@
 import * as dotenv from 'dotenv';
-import { MongoClient, Document } from 'mongodb';
+import { MongoClient, Document, Filter, WithId, FindOptions } from 'mongodb';
 
 dotenv.config();
 
@@ -25,7 +25,17 @@ export class Storage {
     public getCollection<T extends Document>(collection: string) {
         return this.dbClient.db(this.dbName).collection<T>(collection);
     }
+    
+    public async findAndGetAll<T extends Document>(collectionName: string, query: Filter<T>, options?: FindOptions) {
+        const collection = this.getCollection<T>(collectionName);
+        const results: WithId<T>[] = [];
 
+        for await (const document of collection.find(query, options)) {
+            results.push(document);
+        }
+
+        return results;
+    }
 }
 
 export const storage = new Storage({ connectionString: process.env.DB_CONNECTION_STRING as string, dbName: 'WooFinder' });

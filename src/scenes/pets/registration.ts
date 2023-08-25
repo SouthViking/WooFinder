@@ -18,18 +18,18 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
         context.scene.session.pet = {};
         context.scene.session.pet.owners = [context.from!.id];
 
-        const speciesCollection = storage.getCollection<SpeciesDocument>('species');
-        if ((await speciesCollection.estimatedDocumentCount()) === 0) {
+        // Keyboard generation with the species fetched from DB
+        const keyboard: InlineKeyboardButton.CallbackButton[][] = [];
+
+        const species = await storage.findAndGetAll<SpeciesDocument>('species', {});
+        if (species.length === 0) {
             context.reply('⚠️ There are no species available right now for pet registration. Please try again later!');
             sendSceneLeaveText(context);
             return context.scene.leave();
         }
 
-        // Keyboard generation with the species fetched from DB
-        const keyboard: InlineKeyboardButton.CallbackButton[][] = [];
-
         let line: InlineKeyboardButton.CallbackButton[] = [];
-        for await (const speciesDoc of speciesCollection.find()) {
+        for (const speciesDoc of species) {
             const petEmoji = getPetEmojiForSpeciesName(speciesDoc.name);
 
             line.push(Markup.button.callback(`${petEmoji ? `${petEmoji} ` : ''}${speciesDoc.name}`, `${speciesDoc._id}`));

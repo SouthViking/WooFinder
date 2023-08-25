@@ -27,14 +27,8 @@ interface GeoLocationInfo {
  * @returns A Telegram keyboard with the pets that have an active lost report within the provided location.
  */
 export const getLostPetsKeyboard = async (storage: Storage, userId: number, locationInfo: GeoLocationInfo, myPets: boolean = false) => {
-    const petsCollection = storage.getCollection<PetDocument>('pets');
-    const reportsCollection = storage.getCollection<LostPetReportDocument>('reports');
-
-    const userPetsIds: ObjectId[] = [];
     // Find the pets where the owner is the current user ID.
-    for await (const petDoc of petsCollection.find({ 'owners.0': userId })) {
-        userPetsIds.push(petDoc._id);
-    }
+    const userPetsIds = (await storage.findAndGetAll<PetDocument>('pets', { 'owners.0': userId }, { projection: { _id: 1 } })).map(petDoc => (petDoc._id));
 
     // Query to find the reports that are near to the provided location in a certain radius.
     const searchQuery: Filter<LostPetReportDocument> = {
@@ -59,19 +53,23 @@ export const getLostPetsKeyboard = async (storage: Storage, userId: number, loca
     // Map of the reports dates to display it with the name in the keyboard (with timeago format)
     const reportedDatesMap: Record<string, number> = {};
 
-    for await (const reportDoc of reportsCollection.find(searchQuery)) {
+    const reportsFound = await storage.findAndGetAll('reports', searchQuery);
+    for (const reportDoc of reportsFound) {
         targetPetIds.push(reportDoc.petId);
         reportedDatesMap[reportDoc.petId.toString()]  = reportDoc.updatedAt ?? reportDoc.createdAt;
     }
 
     const petSpeciesMap: Record<string, string> = {};
-    const speciesCollection = storage.getCollection<SpeciesDocument>('species');
-    for await (const speciesDoc of speciesCollection.find()) {
+
+    const species = await storage.findAndGetAll<SpeciesDocument>('species', {});
+    for (const speciesDoc of species) {
         petSpeciesMap[speciesDoc._id.toString()] = getPetEmojiForSpeciesName(speciesDoc.name);
     }
 
+    const targetPets = await storage.findAndGetAll<PetDocument>('pets', { _id: { $in: targetPetIds } });
+
     const keyboard: InlineKeyboardButton.CallbackButton[][] = [];
-    for await (const petDoc of petsCollection.find({ _id: { $in: targetPetIds } })) {
+    for (const petDoc of targetPets) {
         const petEmoji = petSpeciesMap[petDoc.species.toString()];
         const elapsedTime = reportedDatesMap[petDoc._id.toString()];
         const reportedTimeAgo = timeAgo.format(new Date(elapsedTime));

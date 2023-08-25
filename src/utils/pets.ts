@@ -36,11 +36,10 @@ export const isValidBirthDate = (birthDate: number): {
  * @param storage The storage object to get the collection of pets.
  */
 export const getUserPetsListKeyboard = async (userId: number, storage: Storage) => {
-    const petsCollection = storage.getCollection<PetDocument>('pets');
-    const userPetsFilter = { 'owners.0': userId};
-
     const keyboard: InlineKeyboardButton.CallbackButton[][] = [];
-    for await (const petDoc of petsCollection.find(userPetsFilter)) {
+
+    const userPets = await storage.findAndGetAll<PetDocument>('pets', { 'owners.0': userId });
+    for (const petDoc of userPets) {
         keyboard.push([Markup.button.callback(`${petDoc.name}`, petDoc._id.toString())]);
     }
 
