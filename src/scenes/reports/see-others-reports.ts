@@ -47,7 +47,7 @@ export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.Wizard
         const lostPetsKeyboard = await getLostPetsKeyboard(storage, userId, {
             coordinates,
             radiusKm: MAX_SEARCH_RADIUS_KM, // TODO: Make radius custom for users as part of the settings
-        }, true);
+        });
 
         if (lostPetsKeyboard.length === 0) {
             context.reply('🔎❌ There are no active reports of lost pets near to the provided location.');
