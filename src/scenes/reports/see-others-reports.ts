@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { ObjectId } from 'mongodb';
 import TimeAgo from 'javascript-time-ago';
 import { Markup, Scenes } from 'telegraf';
-import { Filter, ObjectId } from 'mongodb';
 import en from 'javascript-time-ago/locale/en'
-import { Contact, InlineKeyboardButton } from 'telegraf/typings/core/types/typegram';
+import { Contact } from 'telegraf/typings/core/types/typegram';
 
 import { storage } from '../../db';
-import { generatePetSummaryHTMLMessage, getPetEmojiForSpeciesName, sendSceneLeaveText } from '../../utils';
-import { ConversationSessionData, Coordinates, LostPetReportDocument, PetDocument, SpeciesDocument } from '../../types';
+import { getLostPetsKeyboard } from '../../utils/reports';
+import { generatePetSummaryHTMLMessage, sendSceneLeaveText } from '../../utils';
+import { ConversationSessionData, Coordinates, LostPetReportDocument, PetDocument } from '../../types';
 
 const MAX_SEARCH_RADIUS_KM = 0.5;
 
@@ -30,8 +31,9 @@ export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.Wizard
             return context.scene.leave();
         }
 
-        const sourceCoordinates = (context.update as any).message?.location as Coordinates | undefined;
-        if (!sourceCoordinates) {
+        // Coordinates sent by the user to generate the search.
+        const coordinates = (context.update as any).message?.location as Coordinates | undefined;
+        if (!coordinates) {
             const possibleMessage = (context.update as any).message?.text as string | undefined;
             if (possibleMessage && possibleMessage.toLowerCase() === 'exit') {
                 sendSceneLeaveText(context);
@@ -42,73 +44,21 @@ export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.Wizard
             return context.wizard.selectStep(1);
         }
 
-        const petsCollection = storage.getCollection<PetDocument>('pets');
-        const userPetsFilter = { 'owners.0': userId};
+        const lostPetsKeyboard = await getLostPetsKeyboard(storage, userId, {
+            coordinates,
+            radiusKm: MAX_SEARCH_RADIUS_KM, // TODO: Make radius custom for users as part of the settings
+        }, true);
 
-        const userPetsIds = [];
-        for await (const petDoc of petsCollection.find(userPetsFilter)) {
-           userPetsIds.push(petDoc._id);
-        }
-
-        const reportsCollection = storage.getCollection<LostPetReportDocument>('reports');
-        // This query allows to get the active reports of lost pets within a certain radius from the provided location as the center.
-        // TODO: DRY this query (also any other) in a util, so it can be easily reused.
-        const searchQuery: Filter<LostPetReportDocument> = {
-            $and: [
-                {
-                    lastSeen: {
-                        $geoWithin: {
-                            $centerSphere: [
-                                [sourceCoordinates.longitude, sourceCoordinates.latitude],
-                                MAX_SEARCH_RADIUS_KM / 6378.1, // TODO: Make radius custom for users as part of the settings
-                            ]
-                        }
-                    }
-                },
-                { isActive: true },
-                { petId: { $nin: userPetsIds } }
-            ]
-        };
-
-        const targetPetIds: ObjectId[] = [];
-        const reportedDatesMap: Record<string, number> = {};
-
-        for await (const reportDoc of reportsCollection.find(searchQuery)) {
-            targetPetIds.push(reportDoc.petId);
-            reportedDatesMap[reportDoc.petId.toString()]  = reportDoc.updatedAt ?? reportDoc.createdAt;
-        }
-
-        if (targetPetIds.length === 0) {
+        if (lostPetsKeyboard.length === 0) {
             context.reply('🔎❌ There are no active reports of lost pets near to the provided location.');
             return context.scene.leave();
-        }
-
-        const targetPetQuery: Filter<PetDocument> = {
-            _id: { $in: targetPetIds },
-        };
-
-        const petSpeciesMap: Record<string, string> = {};
-        const speciesCollection = storage.getCollection<SpeciesDocument>('species');
-        for await (const speciesDoc of speciesCollection.find()) {
-            petSpeciesMap[speciesDoc._id.toString()] = getPetEmojiForSpeciesName(speciesDoc.name);
-        }
-
-        const keyboard: InlineKeyboardButton.CallbackButton[][] = [];
-        for await (const petDoc of petsCollection.find(targetPetQuery)) {
-            const petEmoji = petSpeciesMap[petDoc.species.toString()];
-            const elapsedTime = reportedDatesMap[petDoc._id.toString()];
-            const reportedTimeAgo = timeAgo.format(new Date(elapsedTime));
-            
-            const label = petEmoji.length !== 0 ? `${petEmoji} ${petDoc.name} (${reportedTimeAgo})` : petDoc.name;
-
-            keyboard.push([Markup.button.callback(label, petDoc._id.toString())]);
         }
 
         let foundResultsMessage = '🔎🐾 We have found some results! This is the list of lost pets that are near to the provided location.\n';
         foundResultsMessage += 'Select one to see more detail.';
 
         context.reply(foundResultsMessage, {
-            ...Markup.inlineKeyboard(keyboard),
+            ...Markup.inlineKeyboard(lostPetsKeyboard),
         });
 
         return context.wizard.next();
@@ -170,7 +120,10 @@ export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.Wizard
                     Markup.button.callback('Yes, I have seen it', 'seen_it'),
                     Markup.button.callback('Yes, I found it', 'found_it'),
                 ],
-                [ Markup.button.callback('Exit', 'exit') ],
+                [ 
+                    Markup.button.callback('Back', 'back'),
+                    Markup.button.callback('Exit', 'exit'),
+                ],
             ]),
         });
 
