@@ -6,7 +6,7 @@ import en from 'javascript-time-ago/locale/en'
 import { Contact } from 'telegraf/typings/core/types/typegram';
 
 import { storage } from '../../db';
-import { getLostPetsKeyboard } from '../../utils/reports';
+import { GeoLocationInfo, getLostPetsKeyboard } from '../../utils/reports';
 import { generatePetSummaryHTMLMessage, sendSceneLeaveText } from '../../utils';
 import { ConversationSessionData, Coordinates, LostPetReportDocument, PetDocument } from '../../types';
 
@@ -20,14 +20,14 @@ export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.Wizard
     'seeOthersLostPetReportsScene',
     // [Step 0] Entry point: The step begins whenever the user selects the option to see another's reports from the reports menu.
     async (context) => {
-        context.reply('🔎🐾 Send a location to see the list of reports near to it.');
+        await context.reply('🔎🐾 Send a location to see the list of reports near to it.');
         return context.wizard.next();
     },
     // [Step 1] Location: The user must provide a location. It can their own location or any other place of interest.
     async (context) => {
         const userId = context.from?.id;
         if (!userId) {
-            context.reply('⚠️ There has been an error. Please try again later!');
+            await context.reply('⚠️ There has been an error. Please try again later!');
             return context.scene.leave();
         }
 
@@ -40,24 +40,28 @@ export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.Wizard
                 return context.scene.leave();
             }
             
-            context.reply('⚠️ You must provide a valid location.');
+            await context.reply('⚠️ You must provide a valid location. (Enter <b>exit</b> to leave)', { parse_mode: 'HTML' });
             return context.wizard.selectStep(1);
         }
 
         const lostPetsKeyboard = await getLostPetsKeyboard(storage, userId, {
             coordinates,
             radiusKm: MAX_SEARCH_RADIUS_KM, // TODO: Make radius custom for users as part of the settings
-        });
+        }, { myPets: false, withBackButton: true });
 
-        if (lostPetsKeyboard.length === 0) {
-            context.reply('🔎❌ There are no active reports of lost pets near to the provided location.');
-            return context.scene.leave();
+        // Storing coordinates in the session, so the menu can be generated again in case the user wants to go back.
+        context.scene.session.userInput = { selectedLocation: { coordinates, radiusKm: MAX_SEARCH_RADIUS_KM }};
+
+        // Checking with 1, since the back button will be added by default (withBackButton option enabled)
+        if (lostPetsKeyboard.length <= 1) {
+            await context.reply('🔎❌ There are no active reports of lost pets near to the provided location.');
+            return context.scene.reenter();
         }
 
         let foundResultsMessage = '🔎🐾 We have found some results! This is the list of lost pets that are near to the provided location.\n';
         foundResultsMessage += 'Select one to see more detail.';
 
-        context.reply(foundResultsMessage, {
+        await context.reply(foundResultsMessage, {
             ...Markup.inlineKeyboard(lostPetsKeyboard),
         });
 
@@ -73,14 +77,19 @@ export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.Wizard
                 return context.scene.leave();
             }
 
-            context.reply('⚠️ Please select one of the listed pets.');
+            await context.reply('⚠️ Please select one of the listed pets. (Enter <b>exit</b> to leave)', { parse_mode: 'HTML' });
             return context.wizard.selectStep(2);
+        }
+
+        if (petId === 'back') {
+            // User has selected the option to go back in the options.
+            return context.scene.reenter();
         }
         
         const petsCollection = storage.getCollection<PetDocument>('pets');
         const petDoc = await petsCollection.findOne({ _id: new ObjectId(petId) });
         if (!petDoc) {
-            context.reply('⚠️ The pet was not found. Please try again.');
+            await context.reply('⚠️ The pet was not found. Please try again.');
             sendSceneLeaveText(context);
             return context.scene.leave();
         }
@@ -90,7 +99,7 @@ export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.Wizard
         const reportsCollection = storage.getCollection<LostPetReportDocument>('reports');
         const activeReport = await reportsCollection.findOne({ petId: new ObjectId(petId), isActive: true }); 
         if (!activeReport) {
-            context.reply('⚠️ The lost report of the pet was not found. Please try again.');
+            await context.reply('⚠️ The lost report of the pet was not found. Please try again.');
             sendSceneLeaveText(context);
             return context.scene.leave();
         }
@@ -114,7 +123,7 @@ export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.Wizard
         await context.reply('📷 And a reference picture.');
         await context.replyWithPhoto(petDoc.pictureRemoteId);
 
-        context.reply('Have you seen it? Let the owner know!', {
+        await context.reply('Have you seen it? Let the owner know!', {
             ...Markup.inlineKeyboard([
                 [
                     Markup.button.callback('Yes, I have seen it', 'seen_it'),
@@ -139,13 +148,22 @@ export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.Wizard
                 return context.scene.leave();
             }
 
-            context.reply('⚠️ Please select one of the listed options.');
+            await context.reply('⚠️ Please select one of the listed options. (Enter <b>exit</b> to leave)', { parse_mode: 'HTML' });
             return context.wizard.selectStep(3);
         }
 
         if (selectedOption === 'exit') {
             sendSceneLeaveText(context);
             return context.scene.leave();
+        }
+        if (selectedOption === 'back') {
+            const lostPetsKeyboard = await getLostPetsKeyboard(storage, context.from!.id, context.scene.session.userInput!.selectedLocation as GeoLocationInfo, {
+                myPets: false,
+                withBackButton: true,
+            });
+            await context.reply('Select one of the listed pets to see more detail.', { ...Markup.inlineKeyboard(lostPetsKeyboard) });
+
+            return context.wizard.back();
         }
 
         context.scene.session.targetId = selectedOption;
@@ -176,7 +194,7 @@ export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.Wizard
                 return context.scene.leave();
             }
 
-            context.reply('⚠️ Please provide your contact information.');
+            await context.reply('⚠️ Please provide your contact information. (Enter <b>exit</b> to leave)', { parse_mode: 'HTML' });
             return context.wizard.selectStep(4);
         }
 
@@ -190,7 +208,7 @@ export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.Wizard
             context.telegram.sendMessage(ownerId, notificationMessage, { parse_mode: 'HTML' });
         }
 
-        context.reply('✔️ Thanks for your help. Your phone has been shared with the owners!');
+        await context.reply('✔️ Thanks for your help. Your phone has been shared with the owners!');
 
         return context.scene.leave();
     },

@@ -6,15 +6,23 @@ import { Storage } from '../db';
 import { getPetEmojiForSpeciesName } from './pets';
 import { generateTelegramKeyboardWithButtons } from './misc';
 import { Coordinates, KeyboardButtonData, LostPetReportDocument, PetDocument, SpeciesDocument } from '../types';
+import { Markup } from 'telegraf';
 
 TimeAgo.addLocale(en)
 const timeAgo = new TimeAgo('en-US');
 
-interface GeoLocationInfo {
+export interface GeoLocationInfo {
     /** The source coordinates. They will be the center for the search query. */
     coordinates: Coordinates;
     /** The maximum radius for the search from the center.  */
     radiusKm: number;
+}
+
+interface LostPetKeyboardOptions {
+    /** Whether the keyboard should contain user's pets exclusively. Default is `false`.  */
+    myPets?: boolean;
+    /** Whether the keyboard should contain a back button or not. */
+    withBackButton: boolean;
 }
 
 /**
@@ -25,7 +33,7 @@ interface GeoLocationInfo {
  * @param myPets Whether the keyboard should contain user's pets exclusively. Default is `false`.
  * @returns A Telegram keyboard with the pets that have an active lost report within the provided location.
  */
-export const getLostPetsKeyboard = async (storage: Storage, userId: number, locationInfo: GeoLocationInfo, myPets: boolean = false) => {
+export const getLostPetsKeyboard = async (storage: Storage, userId: number, locationInfo: GeoLocationInfo, options: LostPetKeyboardOptions) => {
     // Find the pets where the owner is the current user ID.
     const userPetsIds = (await storage.findAndGetAll<PetDocument>('pets', { 'owners.0': userId }, { projection: { _id: 1 } })).map(petDoc => (petDoc._id));
 
@@ -43,7 +51,7 @@ export const getLostPetsKeyboard = async (storage: Storage, userId: number, loca
                 }
             },
             { isActive: true },
-            { petId: myPets ? { $in: userPetsIds } : { $nin: userPetsIds } },
+            { petId: options.myPets ? { $in: userPetsIds } : { $nin: userPetsIds } },
         ]
     };
 
@@ -78,5 +86,11 @@ export const getLostPetsKeyboard = async (storage: Storage, userId: number, loca
         };
     });
 
-    return generateTelegramKeyboardWithButtons(targetPets, 1);
+    const keyboard =  generateTelegramKeyboardWithButtons(targetPets, 1);
+
+    if (options.withBackButton) {
+        keyboard.push([ Markup.button.callback('Back', 'back') ]);
+    }
+
+    return keyboard;
 };

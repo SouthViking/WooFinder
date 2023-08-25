@@ -5,6 +5,7 @@ import { PetData } from './models';
 export interface ConversationSessionData extends Scenes.WizardSessionData {
     targetId?: string;
     pet?: Partial<PetData>;
+    userInput?: Record<string, unknown>;
 }
 
 export type Full<T> = {
