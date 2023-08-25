@@ -1,12 +1,11 @@
-import { Markup } from 'telegraf';
 import TimeAgo from 'javascript-time-ago';
 import { Filter, ObjectId } from 'mongodb';
 import en from 'javascript-time-ago/locale/en';
-import { InlineKeyboardButton } from 'telegraf/typings/core/types/typegram';
 
 import { Storage } from '../db';
 import { getPetEmojiForSpeciesName } from './pets';
-import { Coordinates, LostPetReportDocument, PetDocument, SpeciesDocument } from '../types';
+import { generateTelegramKeyboardWithButtons } from './misc';
+import { Coordinates, KeyboardButtonData, LostPetReportDocument, PetDocument, SpeciesDocument } from '../types';
 
 TimeAgo.addLocale(en)
 const timeAgo = new TimeAgo('en-US');
@@ -66,18 +65,18 @@ export const getLostPetsKeyboard = async (storage: Storage, userId: number, loca
         petSpeciesMap[speciesDoc._id.toString()] = getPetEmojiForSpeciesName(speciesDoc.name);
     }
 
-    const targetPets = await storage.findAndGetAll<PetDocument>('pets', { _id: { $in: targetPetIds } });
-
-    const keyboard: InlineKeyboardButton.CallbackButton[][] = [];
-    for (const petDoc of targetPets) {
+    const targetPets: KeyboardButtonData[] = (await storage.findAndGetAll<PetDocument>('pets', { _id: { $in: targetPetIds } })).map(petDoc => {
         const petEmoji = petSpeciesMap[petDoc.species.toString()];
         const elapsedTime = reportedDatesMap[petDoc._id.toString()];
         const reportedTimeAgo = timeAgo.format(new Date(elapsedTime));
-        
+
         const label = petEmoji.length !== 0 ? `${petEmoji} ${petDoc.name} (${reportedTimeAgo})` : petDoc.name;
+        
+        return {
+            text: label,
+            data: petDoc._id.toString(),
+        };
+    });
 
-        keyboard.push([Markup.button.callback(label, petDoc._id.toString())]);
-    }
-
-    return keyboard;
+    return generateTelegramKeyboardWithButtons(targetPets, 1);
 };

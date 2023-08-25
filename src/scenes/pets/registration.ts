@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ObjectId } from 'mongodb';
 import { Markup, Scenes } from 'telegraf';
-import { InlineKeyboardButton } from 'telegraf/typings/core/types/typegram';
 
 import { storage } from '../../db';
-import { ConversationSessionData, Full, PetData, PetDocument, SpeciesDocument } from '../../types';
+import { ConversationSessionData, Full, KeyboardButtonData, PetData, PetDocument, SpeciesDocument } from '../../types';
 import { ensureUserExists, generatePetSummaryHTMLMessage, getPetEmojiForSpeciesName, isValidBirthDate, sendSceneLeaveText } from '../../utils';
+import { generateTelegramKeyboardWithButtons } from '../../utils/misc';
 
 const MAX_SECONDARY_PET_NAMES_ALLOWED = 5;
 export const PET_REGISTRATION_SCENE_ID = 'petRegistrationScene';
@@ -18,9 +18,6 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
         context.scene.session.pet = {};
         context.scene.session.pet.owners = [context.from!.id];
 
-        // Keyboard generation with the species fetched from DB
-        const keyboard: InlineKeyboardButton.CallbackButton[][] = [];
-
         const species = await storage.findAndGetAll<SpeciesDocument>('species', {});
         if (species.length === 0) {
             context.reply('⚠️ There are no species available right now for pet registration. Please try again later!');
@@ -28,20 +25,14 @@ export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<
             return context.scene.leave();
         }
 
-        let line: InlineKeyboardButton.CallbackButton[] = [];
-        for (const speciesDoc of species) {
+        const buttons: KeyboardButtonData[] = species.map(speciesDoc => {
             const petEmoji = getPetEmojiForSpeciesName(speciesDoc.name);
-
-            line.push(Markup.button.callback(`${petEmoji ? `${petEmoji} ` : ''}${speciesDoc.name}`, `${speciesDoc._id}`));
-            if (line.length >= 2) {
-                keyboard.push(line);
-                line = [];
+            return {
+                text: `${petEmoji ? `${petEmoji} ` : ''}${speciesDoc.name}`,
+                data: speciesDoc._id.toString(),
             }
-        }
-
-        if (line.length) {
-            keyboard.push(line);
-        }
+        });
+        const keyboard = generateTelegramKeyboardWithButtons(buttons, 2);
 
         context.reply(
             'Okay! Lets add a new pet to your list! (Enter <b>"exit"</b> to cancel / <b>"back"</b> to go to previous steps)',

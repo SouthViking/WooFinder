@@ -12,3 +12,9 @@ export type Full<T> = {
 };
 
 export type Coordinates = { latitude: number; longitude: number; altitude?: number };
+
+export interface KeyboardButtonData {
+    text: string;
+    data: string;
+    hide?: boolean;
+}
