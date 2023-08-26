@@ -8,7 +8,7 @@ import { Contact } from 'telegraf/typings/core/types/typegram';
 import { AppCollections, storage } from '../../db';
 import { GeoLocationInfo, getLostPetsKeyboard } from '../../utils/reports';
 import { generatePetSummaryHTMLMessage, sendSceneLeaveText } from '../../utils';
-import { ConversationSessionData, Coordinates, LostPetReportDocument, PetDocument } from '../../types';
+import { ConversationSessionData, Coordinates, LostPetReportDocument, PetDocument, SceneID } from '../../types';
 
 const MAX_SEARCH_RADIUS_KM = 0.5;
 
@@ -17,7 +17,7 @@ const timeAgo = new TimeAgo('en-US');
 
 // Definition of the dialog with the user to see another's lost pet reports.
 export const seeOthersLostPetReportsScene = new Scenes.WizardScene<Scenes.WizardContext<ConversationSessionData>>(
-    'seeOthersLostPetReportsScene',
+    SceneID.DISPLAY_OTHERS_LOST_REPORT,
     // [Step 0] Entry point: The step begins whenever the user selects the option to see another's reports from the reports menu.
     async (context) => {
         await context.reply('🔎🐾 Send a location to see the list of reports near to it.');
