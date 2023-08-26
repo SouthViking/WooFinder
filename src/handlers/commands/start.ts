@@ -15,7 +15,6 @@ export const startHandlerDef: CommandHandlerDefinition = {
             🦴🐶 Hey <b>${displayName}</b>! Welcome to <b>WooFinder</b> 🐾🐱\nA telegram bot that helps you to find lost and found pets.\b
         `;
 
-        context.replyWithHTML(welcomeMessage);
-        context.reply('You can see the command list by typing /commands');
+        await context.replyWithHTML(welcomeMessage);
     },
 };
