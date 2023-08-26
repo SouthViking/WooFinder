@@ -1,5 +1,5 @@
 
-export enum SceneID {
+export enum Scenes {
     PET_REGISTRATION = 'petRegistrationScene',
     PET_OWNER_REGISTRATION = 'petOwnerRegistrationScene',
     LOST_REPORT_CREATION = 'lostPetReportCreationScene',

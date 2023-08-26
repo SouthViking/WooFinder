@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ObjectId } from 'mongodb';
-import { Markup, Scenes } from 'telegraf';
+import { Markup, Scenes as TelegrafScenes } from 'telegraf';
 
 import { AppCollections, storage } from '../../db';
 import { ensureUserExists, getUserPetsListKeyboard, sendSceneLeaveText } from '../../utils';
-import { ConversationSessionData, Coordinates, LostPetReportDocument, SceneID } from '../../types';
+import { ConversationSessionData, Coordinates, LostPetReportDocument, Scenes } from '../../types';
 
 // Definition of the dialog with the user to create a new lost pet report. 
-export const lostPetReportCreationScene = new Scenes.WizardScene<Scenes.WizardContext<ConversationSessionData>>(
-    SceneID.LOST_REPORT_CREATION, 
+export const lostPetReportCreationScene = new TelegrafScenes.WizardScene<TelegrafScenes.WizardContext<ConversationSessionData>>(
+    Scenes.LOST_REPORT_CREATION, 
     // [Step 0] Entry point: The step begins whenever the user selects the option to create a new report from the reports menu.
     async (context) => {
         const userId = context.from?.id;

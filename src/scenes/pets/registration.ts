@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ObjectId } from 'mongodb';
-import { Markup, Scenes } from 'telegraf';
+import { Markup, Scenes as TelegrafScenes } from 'telegraf';
 
 import { AppCollections, storage } from '../../db';
-import { ConversationSessionData, Full, KeyboardButtonData, PetData, PetDocument, SceneID, SpeciesDocument } from '../../types';
+import { ConversationSessionData, Full, KeyboardButtonData, PetData, PetDocument, Scenes, SpeciesDocument } from '../../types';
 import { ensureUserExists, generatePetSummaryHTMLMessage, getPetEmojiForSpeciesName, isValidBirthDate, sendSceneLeaveText } from '../../utils';
 import { generateTelegramKeyboardWithButtons } from '../../utils/misc';
 
 const MAX_SECONDARY_PET_NAMES_ALLOWED = 5;
 
 // Definition of the scene with the steps that will be executed whenever a user starts a new pet creation.
-export const petRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<ConversationSessionData>>(
-    SceneID.PET_REGISTRATION,
+export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScenes.WizardContext<ConversationSessionData>>(
+    Scenes.PET_REGISTRATION,
     // [Step 0] Entry point: The step beings whenever the user selects the option to add a new pet from the pets menu.
     async (context) => {
         context.scene.session.pet = {};

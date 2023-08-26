@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ObjectId } from 'mongodb';
-import { Markup, Scenes } from 'telegraf';
+import { Markup, Scenes as TelegrafScenes } from 'telegraf';
 
 import { AppCollections, storage } from '../../db';
-import { ConversationSessionData, PetDocument, SceneID, UserDocument } from '../../types';
+import { ConversationSessionData, PetDocument, Scenes, UserDocument } from '../../types';
 import { ensureUserExists, getUserPetsListKeyboard, sendSceneLeaveText } from '../../utils';
 
 // Definition of the dialog with the user to add secondary owners to a specific pet.
-export const petOwnerRegistrationScene = new Scenes.WizardScene<Scenes.WizardContext<ConversationSessionData>>(
-    SceneID.PET_OWNER_REGISTRATION,
+export const petOwnerRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScenes.WizardContext<ConversationSessionData>>(
+    Scenes.PET_OWNER_REGISTRATION,
     // [Step 0] Entry point: The step begins whenever the user selects the option to add an owner from the pets menu.
     async (context) => {
         const userId = context.from?.id;
