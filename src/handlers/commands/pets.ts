@@ -1,6 +1,6 @@
 import { Markup } from 'telegraf';
 
-import { CommandHandlerDefinition, HandlerType } from '../../types';
+import { CommandHandlerDefinition, HandlerType, TriggerType } from '../../types';
 
 export const petsMenu: CommandHandlerDefinition = {
     type: HandlerType.COMMAND,
@@ -12,15 +12,15 @@ export const petsMenu: CommandHandlerDefinition = {
             parse_mode: 'HTML',
             ...Markup.inlineKeyboard([
                 [
-                    Markup.button.callback('Register new pet', 'pet_register'),
-                    Markup.button.callback('Update pet', 'pet_update'),
+                    Markup.button.callback('Register new pet', TriggerType.PET_REGISTER),
+                    Markup.button.callback('Update pet', TriggerType.PET_UPDATE),
                 ],
                 [
-                    Markup.button.callback('Remove pet', 'pet_remove'),
-                    Markup.button.callback('Register pet owner', 'pet_owner_register'),
+                    Markup.button.callback('Remove pet', TriggerType.PET_REMOVE),
+                    Markup.button.callback('Register pet owner', TriggerType.PET_OWNER_REGISTER),
                 ],
                 [
-                    Markup.button.callback('Create lost report', 'pet_create_lost_report'),
+                    Markup.button.callback('Create lost report', TriggerType.PET_CREATE_LOST_REPORT),
                 ]
             ]),
         });

@@ -1,5 +1,6 @@
 import { Markup } from 'telegraf';
-import { CommandHandlerDefinition, HandlerType } from '../../types';
+
+import { CommandHandlerDefinition, HandlerType, TriggerType } from '../../types';
 
 export const reportsMenu: CommandHandlerDefinition = {
     type: HandlerType.COMMAND,
@@ -10,7 +11,7 @@ export const reportsMenu: CommandHandlerDefinition = {
         context.reply('<b>🔎 Lost pet reports 🔎</b>', {
             parse_mode: 'HTML',
             ...Markup.inlineKeyboard([
-                [Markup.button.callback('My reports', 'my_reports'), Markup.button.callback('See other\'s reports', 'see_others_reports')],
+                [Markup.button.callback('My reports', TriggerType.DISPLAY_MY_LOST_REPORTS), Markup.button.callback('See other\'s reports', TriggerType.DISPLAY_OTHERS_LOST_REPORTS)],
             ]),
         });
     },
