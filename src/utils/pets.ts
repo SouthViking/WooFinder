@@ -3,12 +3,8 @@ import { Markup, Scenes as TelegrafScenes } from 'telegraf';
 import { sendSceneLeaveText } from './scenes';
 import { AppCollections, Storage, storage } from '../db';
 import { generateTelegramKeyboardWithButtons } from './misc';
+import { MAX_SECONDARY_PET_NAMES_ALLOWED } from '../validators/pets';
 import { ConversationSessionData, KeyboardButtonData, PetData, PetDocument, SpeciesDocument } from '../types';
-
-const MIN_ALLOWED_BIRTHDATE = '2000-01-01';
-const MIN_ALLOWED_BIRTHDATE_TIMESTAMP = Date.parse(MIN_ALLOWED_BIRTHDATE);
-
-export const MAX_SECONDARY_PET_NAMES_ALLOWED = 5;
 
 export const getPetEmojiForSpeciesName = (species: string) => {
     return {
@@ -17,20 +13,6 @@ export const getPetEmojiForSpeciesName = (species: string) => {
     }[species.toLowerCase()] ?? '';
 };
 
-export const isValidBirthDate = (birthDate: number): {
-    isValid: boolean;
-    errorMessage?: string;
-} => {
-    if (birthDate < MIN_ALLOWED_BIRTHDATE_TIMESTAMP) {
-        return { isValid: false, errorMessage: `Invalid birthdate. The date must be greater than ${MIN_ALLOWED_BIRTHDATE}.` };
-    }
-
-    if (birthDate > Date.now()) {
-        return { isValid: false, errorMessage: 'Invalid birthdate. The date must be less than the current date.' };
-    }
-
-    return { isValid: true };
-};
 
 /**
  * Returns a Telegram keyboard based on the stored pets for the given `userId`.
@@ -73,7 +55,7 @@ export const sendPetNameRegistrationMessage = async (context: TelegrafScenes.Wiz
     await context.reply('Please enter the name of your pet');
 };
 
-export const sendPetSecondaryOwnersRegistrationMessage = async (context: TelegrafScenes.WizardContext<ConversationSessionData>) => {
+export const sendPetOtherNamesRegistrationMessage = async (context: TelegrafScenes.WizardContext<ConversationSessionData>) => {
     let instructionsMessage = 'Sometimes pets have more than one name that they can recognize. ';
     instructionsMessage += `Please enter a list of secondary names separated by a space (max ${MAX_SECONDARY_PET_NAMES_ALLOWED}), send <b>"no"</b> otherwise.`;
 

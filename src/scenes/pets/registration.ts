@@ -5,21 +5,20 @@ import { Scenes as TelegrafScenes } from 'telegraf';
 import { AppCollections, storage } from '../../db';
 import { ConversationSessionData, Full, PetData, PetDocument, Scenes } from '../../types';
 import {
-    MAX_SECONDARY_PET_NAMES_ALLOWED,
     ensureUserExists,
     generatePetSummaryHTMLMessage,
-    isValidBirthDate,
     replyMatchesText,
     sendBirthDateRegistrationMessage,
     sendDescriptionRegistrationMessage,
     sendPetNameRegistrationMessage,
-    sendPetSecondaryOwnersRegistrationMessage,
+    sendPetOtherNamesRegistrationMessage,
     sendPictureRegistrationMessage,
     sendSceneLeaveText,
     sendSizeRegistrationMessage,
     sendSpeciesRegistrationMessage,
     sendWeightRegistrationMessage,
 } from '../../utils';
+import { MAX_SECONDARY_PET_NAMES_ALLOWED, validatePetBirthDate, validatePetName, validatePetSize, validatePetSpecies, validatePetWeight } from '../../validators/pets';
 
 // Definition of the scene with the steps that will be executed whenever a user starts a new pet creation.
 export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScenes.WizardContext<ConversationSessionData>>(
@@ -46,6 +45,12 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
 
         const speciesId = (context.update as any).callback_query?.data as string;
 
+        const { isValid, errorMessage } = await validatePetSpecies(speciesId);
+        if (!isValid) {
+            await context.reply(`⚠️ There has been an error (${errorMessage}). Please select again.`);
+            return context.wizard.selectStep(1);
+        }
+
         context.scene.session.pet!.species = new ObjectId(speciesId);
 
         await sendPetNameRegistrationMessage(context);
@@ -66,11 +71,17 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
             return context.wizard.selectStep(2);
         }
 
-        const answer = (context.message as any).text as string;
+        const petName = (context.message as any).text as string;
 
-        context.scene.session.pet!.name = answer;
+        const { isValid, errorMessage } = validatePetName(petName);
+        if (!isValid) {
+            await context.reply(`⚠️ The selected name is not correct (${errorMessage}). Please send it again.`);
+            return context.wizard.selectStep(2);
+        }
 
-        await sendPetSecondaryOwnersRegistrationMessage(context);
+        context.scene.session.pet!.name = petName;
+
+        await sendPetOtherNamesRegistrationMessage(context);
 
         return context.wizard.next();
     },
@@ -113,19 +124,14 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
         }
 
         const answer = (context.message as any).text as string;
-
-        const parsedBirthDate = Date.parse(answer);
-        if (isNaN(parsedBirthDate)) {
-            context.reply('⚠️ That is not a valid date. Please try again (format: <b>yyyy-mm-dd</b>)', { parse_mode: 'HTML' });
-            return context.wizard.selectStep(4);
-        }
-        const { isValid, errorMessage } = isValidBirthDate(parsedBirthDate);
+        const { isValid, errorMessage } = validatePetBirthDate(answer);
         if (!isValid) {
-            context.reply(`⚠️ ${errorMessage}`);
+            context.reply(`⚠️ ${errorMessage}. Please try again.`);
             return context.wizard.selectStep(4);
         }
 
-        context.scene.session.pet!.birthDate = parsedBirthDate;
+
+        context.scene.session.pet!.birthDate = Date.parse(answer);
 
         await sendSizeRegistrationMessage(context);
 
@@ -139,6 +145,12 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
         }
 
         const petSize = (context.update as any).callback_query?.data as string;
+
+        const { isValid, errorMessage } = validatePetSize(petSize);
+        if (!isValid) {
+            context.reply(`⚠️ ${errorMessage}. Please select again.`);
+            return context.wizard.selectStep(5);
+        }
 
         context.scene.session.pet!.size = petSize
 
@@ -162,13 +174,13 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
 
         const answer = (context.message as any).text as string;
 
-        const parsedWeight = parseFloat(answer);
-        if (isNaN(parsedWeight) || parsedWeight <= 0) {
-            context.reply('⚠️ The weight must be a positive number. Please try again. ');
+        const {isValid, errorMessage } = validatePetWeight(answer);
+        if (!isValid) {
+            context.reply(`⚠️ ${errorMessage}. Please send again.`);
             return context.wizard.selectStep(6);
         }
 
-        context.scene.session.pet!.weight = parsedWeight;
+        context.scene.session.pet!.weight = parseFloat(answer);
 
         await sendDescriptionRegistrationMessage(context);
 
