@@ -27,5 +27,9 @@ export const replyMatchesText = (context: Scenes.WizardContext<ConversationSessi
             break;
     }
 
+    if (!text) {
+        return false;
+    }
+
     return text.toLowerCase() === expected;
 }
