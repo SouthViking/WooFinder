@@ -6,6 +6,7 @@ import { AppCollections, storage } from '../../db';
 import { 
     generatePetSummaryHTMLMessage,
     getUserPetsListKeyboard,
+    generateTelegramKeyboardWithButtons,
     replyMatchesText,
     sendSceneLeaveText,
     sendBirthDateRegistrationMessage,
@@ -17,7 +18,6 @@ import {
     sendSpeciesRegistrationMessage,
     sendWeightRegistrationMessage,
 } from '../../utils';
-import { generateTelegramKeyboardWithButtons } from '../../utils/misc';
 import { ConversationSessionData, Full, KeyboardButtonData, PetData, PetDocument, Scenes } from '../../types';
 
 export const petUpdateScene = new TelegrafScenes.WizardScene<TelegrafScenes.WizardContext<ConversationSessionData>>(

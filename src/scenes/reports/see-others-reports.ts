@@ -6,9 +6,8 @@ import { Markup, Scenes as TelegrafScenes } from 'telegraf';
 import { Contact } from 'telegraf/typings/core/types/typegram';
 
 import { AppCollections, storage } from '../../db';
-import { GeoLocationInfo, getLostPetsKeyboard } from '../../utils/reports';
-import { generatePetSummaryHTMLMessage, replyMatchesText, sendSceneLeaveText } from '../../utils';
 import { ConversationSessionData, Coordinates, LostPetReportDocument, PetDocument, Scenes } from '../../types';
+import { GeoLocationInfo, getLostPetsKeyboard, generatePetSummaryHTMLMessage, replyMatchesText, sendSceneLeaveText } from '../../utils';
 
 const MAX_SEARCH_RADIUS_KM = 0.5;
 
