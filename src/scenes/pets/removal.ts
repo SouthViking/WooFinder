@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ObjectId } from 'mongodb';
-import { Markup, Scenes as TelegrafScenes } from "telegraf";
+import { Markup, Scenes as TelegrafScenes } from 'telegraf';
 
 import { AppCollections, storage } from '../../db';
-import { getUserPetsListKeyboard, replyMatchesText, sendSceneLeaveText } from "../../utils";
-import { ConversationSessionData, LostPetReportDocument, PetDocument, Scenes } from "../../types";
+import { getUserPetsListKeyboard, replyMatchesText, sendSceneLeaveText } from '../../utils';
+import { ConversationSessionData, LostPetReportDocument, PetDocument, Scenes } from '../../types';
 
 export const petRemoveScene = new TelegrafScenes.WizardScene<TelegrafScenes.WizardContext<ConversationSessionData>>(
     Scenes.PET_REMOVE,
