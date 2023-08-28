@@ -17,19 +17,23 @@ export enum AppCollections {
 
 export class Storage {
     public dbName: string;
-    private dbClient: MongoClient;
+    private dbClient: MongoClient | undefined;
 
     constructor(config: StorageConfig) {
         this.dbName = config.dbName;
-        this.dbClient = new MongoClient(config.connectionString);
-        this.connect();
+        this.connect(config.connectionString);
     }
 
-    private async connect() {
-        await this.dbClient.connect();
+    private async connect(connectionString: string) {
+        const mongoClient = new MongoClient(connectionString);
+        this.dbClient = await mongoClient.connect();
     }
 
     public getCollection<T extends Document>(collection: string) {
+        if (!this.dbClient) {
+            throw new Error('DB client not initialized');
+        }
+
         return this.dbClient.db(this.dbName).collection<T>(collection);
     }
     
