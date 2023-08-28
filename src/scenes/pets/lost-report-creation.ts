@@ -3,8 +3,8 @@ import { ObjectId } from 'mongodb';
 import { Markup, Scenes as TelegrafScenes } from 'telegraf';
 
 import { AppCollections, storage } from '../../db';
-import { ensureUserExists, getUserPetsListKeyboard, sendSceneLeaveText } from '../../utils';
 import { ConversationSessionData, Coordinates, LostPetReportDocument, Scenes } from '../../types';
+import { ensureUserExists, getUserPetsListKeyboard, replyMatchesText, sendSceneLeaveText } from '../../utils';
 
 // Definition of the dialog with the user to create a new lost pet report. 
 export const lostPetReportCreationScene = new TelegrafScenes.WizardScene<TelegrafScenes.WizardContext<ConversationSessionData>>(
@@ -33,17 +33,16 @@ export const lostPetReportCreationScene = new TelegrafScenes.WizardScene<Telegra
     },
     // [Step 1] Pet selection: Step in which the selected pet is detected and verified.
     async (context) => {
-        const petId = (context.update as any).callback_query?.data as string | undefined;
-        if (!petId) {
-            const possibleMessage = (context.update as any).message.text as string | undefined; 
-            if (possibleMessage && possibleMessage.toLowerCase() === 'exit') {
-                sendSceneLeaveText(context);
-                return context.scene.leave();
-            }
-
+        if (replyMatchesText(context, 'exit')) {
+            sendSceneLeaveText(context);
+            return context.scene.leave();
+        }
+        if (context.updateType !== 'callback_query') {
             context.reply('⚠️ Please select one of the listed pets.');
             return context.wizard.selectStep(1);
         }
+
+        const petId = (context.update as any).callback_query?.data as string;
 
         const reportsCollection = storage.getCollection<LostPetReportDocument>(AppCollections.REPORTS);
         if ((await reportsCollection.countDocuments({ petId: new ObjectId(petId), isActive: true }) !== 0)) {
@@ -60,14 +59,17 @@ export const lostPetReportCreationScene = new TelegrafScenes.WizardScene<Telegra
     },
     // [Step 2] Location selection: In this step the user has to provide a valid Telegram location and it also creates the report.
     async (context) => {
+        if (replyMatchesText(context, 'exit')) {
+            sendSceneLeaveText(context);
+            return context.scene.leave();
+        }
+        if (context.updateType !== 'message') {
+            context.reply('⚠️ You must provide a valid location.');
+            return context.wizard.selectStep(2);
+        }
+
         const lastSeenCoordinates = (context.update as any).message?.location as Coordinates | undefined;
         if (!lastSeenCoordinates) {
-            const possibleMessage = (context.update as any).message?.text as string | undefined;
-            if (possibleMessage && possibleMessage.toLowerCase() === 'exit') {
-                sendSceneLeaveText(context);
-                return context.scene.leave();
-            }
-
             context.reply('⚠️ You must provide a valid location.');
             return context.wizard.selectStep(2);
         }

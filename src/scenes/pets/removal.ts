@@ -3,7 +3,7 @@ import { ObjectId } from 'mongodb';
 import { Markup, Scenes as TelegrafScenes } from "telegraf";
 
 import { AppCollections, storage } from '../../db';
-import { getUserPetsListKeyboard, sendSceneLeaveText } from "../../utils";
+import { getUserPetsListKeyboard, replyMatchesText, sendSceneLeaveText } from "../../utils";
 import { ConversationSessionData, LostPetReportDocument, PetDocument, Scenes } from "../../types";
 
 export const petRemoveScene = new TelegrafScenes.WizardScene<TelegrafScenes.WizardContext<ConversationSessionData>>(
@@ -30,6 +30,10 @@ export const petRemoveScene = new TelegrafScenes.WizardScene<TelegrafScenes.Wiza
         return context.wizard.next();
     },
     async (context) => {
+        if (replyMatchesText(context, 'exit')) {
+            sendSceneLeaveText(context);
+            return context.scene.leave();
+        }
         if (context.updateType !== 'callback_query') {
             await context.reply('⚠️ The selected option is not valid. Please select one of the available options.');
             return context.wizard.selectStep(1);

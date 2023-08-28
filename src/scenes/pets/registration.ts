@@ -3,9 +3,9 @@ import { ObjectId } from 'mongodb';
 import { Markup, Scenes as TelegrafScenes } from 'telegraf';
 
 import { AppCollections, storage } from '../../db';
-import { ConversationSessionData, Full, KeyboardButtonData, PetData, PetDocument, Scenes, SpeciesDocument } from '../../types';
-import { ensureUserExists, generatePetSummaryHTMLMessage, getPetEmojiForSpeciesName, isValidBirthDate, sendSceneLeaveText } from '../../utils';
 import { generateTelegramKeyboardWithButtons } from '../../utils/misc';
+import { ConversationSessionData, Full, KeyboardButtonData, PetData, PetDocument, Scenes, SpeciesDocument } from '../../types';
+import { ensureUserExists, generatePetSummaryHTMLMessage, getPetEmojiForSpeciesName, isValidBirthDate, replyMatchesText, sendSceneLeaveText } from '../../utils';
 
 const MAX_SECONDARY_PET_NAMES_ALLOWED = 5;
 
@@ -45,17 +45,16 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
     },
     // [Step 1] Species selection: In this step the user has to provide one of the available species for the target pet.
     async (context) => {
-        const speciesId = (context.update as any).callback_query?.data as string | undefined;
-        if (!speciesId) {
-            const possibleMessage = (context.update as any).message.text as string | undefined; 
-            if (possibleMessage && possibleMessage.toLowerCase() === 'exit') {
-                sendSceneLeaveText(context);
-                return context.scene.leave();
-            }
-
+        if (replyMatchesText(context, 'exit')) {
+            sendSceneLeaveText(context);
+            return context.scene.leave();
+        }
+        if (context.updateType !== 'callback_query') {
             context.reply('⚠️ You must choose one of the available options. Please select again.');
             return context.wizard.selectStep(1);
         }
+
+        const speciesId = (context.update as any).callback_query?.data as string;
 
         context.scene.session.pet!.species = new ObjectId(speciesId);
 
@@ -68,19 +67,19 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
     },
     // [Step 2] Name: In this step the user has to provide the name of the pet.
     async (context) => {
-        const answer = (context.message as any).text as string | undefined;
-        if (!answer) {
-            context.reply('⚠️ You need to specify a name for your pet. Please send again.');
-            return context.wizard.selectStep(2);
-        }
-        if (answer.toLowerCase() === 'exit') {
+        if (replyMatchesText(context, 'exit')) {
             sendSceneLeaveText(context);
             return context.scene.leave();
         }
-        if (answer.toLowerCase() === 'back') {
-            sendSceneLeaveText(context);
+        if (replyMatchesText(context, 'back')) {
             return context.wizard.back();
         }
+        if (context.updateType !== 'message') {
+            context.reply('⚠️ You need to specify a name for your pet. Please send again.');
+            return context.wizard.selectStep(2);
+        }
+
+        const answer = (context.message as any).text as string;
 
         context.scene.session.pet!.name = answer;
 
@@ -93,18 +92,19 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
     },
     // [Step 3] Other names: In this step (which is also optional) the user can provide some other names for the pet.
     async (context) => {
-        const answer = (context.message as any).text as string | undefined;
-        if (!answer) {
-            context.reply('⚠️ Incorrect input. Please send again.');
-            return context.wizard.selectStep(3);
-        }
-        if (answer.toLowerCase() === 'exit') {
+        if (replyMatchesText(context, 'exit')) {
             sendSceneLeaveText(context);
             return context.scene.leave();
         }
-        if (answer.toLowerCase() === 'back') {
+        if (replyMatchesText(context, 'back')) {
             return context.wizard.back();
         }
+        if (context.updateType !== 'message') {
+            context.reply('⚠️ Incorrect input. Please send again.');
+            return context.wizard.selectStep(3);
+        }
+
+        const answer = (context.message as any).text as string;
 
         if (answer.toLowerCase() !== 'no') {
             context.scene.session.pet!.otherNames = answer.split(' ').slice(0, MAX_SECONDARY_PET_NAMES_ALLOWED);
@@ -116,18 +116,19 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
     },
     // [Step 4] Birthdate: In this step the user has to provide a date of birth that have to be within a valid range.
     async (context) => {
-        const answer = (context.message as any).text as string | undefined;
-        if (!answer) {
-            context.reply('⚠️ You need to specify a birthdate for your pet. Please send again.');
-            return context.wizard.selectStep(2);
-        }
-        if (answer.toLowerCase() === 'exit') {
+        if (replyMatchesText(context, 'exit')) {
             sendSceneLeaveText(context);
             return context.scene.leave();
         }
-        if (answer.toLowerCase() === 'back') {
+        if (replyMatchesText(context, 'back')) {
             return context.wizard.back();
         }
+        if (context.updateType !== 'message') {
+            context.reply('⚠️ You need to specify a birthdate for your pet. Please send again.');
+            return context.wizard.selectStep(2);
+        }
+
+        const answer = (context.message as any).text as string;
 
         const parsedBirthDate = Date.parse(answer);
         if (isNaN(parsedBirthDate)) {
@@ -153,11 +154,12 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
     },
     // [Step 5] Size selection: The user has to enter one of the available options listed in the menu above.
     async (context) => {
-        const petSize = (context.update as any).callback_query?.data as string | undefined;
-        if (!petSize) {
+        if (context.updateType !== 'callback_query') {
             context.reply('⚠️ You must choose one of the available options. Please select again.');
             return context.wizard.selectStep(5);
         }
+
+        const petSize = (context.update as any).callback_query?.data as string;
 
         context.scene.session.pet!.size = petSize
 
@@ -167,18 +169,19 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
     },
     // [Step 6] Weight: In this step the user has to provide the pet's weight.
     async (context) => {
-        const answer = (context.message as any).text as string | undefined;
-        if (!answer) {
-            context.reply('⚠️ You need to specify a estimated weight for your pet. Please send again.');
-            return context.wizard.selectStep(6);
-        }
-        if (answer.toLowerCase() === 'exit') {
+        if (replyMatchesText(context, 'exit')) {
             sendSceneLeaveText(context);
             return context.scene.leave();
         }
-        if (answer.toLowerCase() === 'back') {
+        if (replyMatchesText(context, 'back')) {
             return context.wizard.back();
         }
+        if (context.updateType !== 'message') {
+            context.reply('⚠️ You need to specify a estimated weight for your pet. Please send again.');
+            return context.wizard.selectStep(6);
+        }
+
+        const answer = (context.message as any).text as string;
 
         const parsedWeight = parseFloat(answer);
         if (isNaN(parsedWeight) || parsedWeight <= 0) {
@@ -197,18 +200,19 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
     },
     // [Step 7] Description: In this step the user has to provide a description for the pet.
     async (context) => {
-        const answer = (context.message as any).text as string;
-        if (!answer) {
-            context.reply('⚠️ You need to specify a description for your pet. Please send again.');
-            return context.wizard.selectStep(7);
-        }
-        if (answer.toLowerCase() === 'exit') {
+        if (replyMatchesText(context, 'exit')) {
             sendSceneLeaveText(context);
             return context.scene.leave();
         }
-        if (answer.toLowerCase() === 'back') {
+        if (replyMatchesText(context, 'back')) {
             return context.wizard.back();
         }
+        if (context.updateType !== 'message') {
+            context.reply('⚠️ You need to specify a description for your pet. Please send again.');
+            return context.wizard.selectStep(7);
+        }
+
+        const answer = (context.message as any).text as string;
 
         context.scene.session.pet!.description = answer;
 

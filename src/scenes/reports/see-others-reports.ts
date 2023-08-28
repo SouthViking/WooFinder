@@ -7,7 +7,7 @@ import { Contact } from 'telegraf/typings/core/types/typegram';
 
 import { AppCollections, storage } from '../../db';
 import { GeoLocationInfo, getLostPetsKeyboard } from '../../utils/reports';
-import { generatePetSummaryHTMLMessage, sendSceneLeaveText } from '../../utils';
+import { generatePetSummaryHTMLMessage, replyMatchesText, sendSceneLeaveText } from '../../utils';
 import { ConversationSessionData, Coordinates, LostPetReportDocument, PetDocument, Scenes } from '../../types';
 
 const MAX_SEARCH_RADIUS_KM = 0.5;
@@ -25,6 +25,15 @@ export const seeOthersLostPetReportsScene = new TelegrafScenes.WizardScene<Teleg
     },
     // [Step 1] Location: The user must provide a location. It can their own location or any other place of interest.
     async (context) => {
+        if (replyMatchesText(context, 'exit')) {
+            sendSceneLeaveText(context);
+            return context.scene.leave();
+        }
+        if (context.updateType !== 'message') {
+            await context.reply('⚠️ You must provide a valid location. (Enter <b>exit</b> to leave)', { parse_mode: 'HTML' });
+            return context.wizard.selectStep(1);
+        }
+
         const userId = context.from?.id;
         if (!userId) {
             await context.reply('⚠️ There has been an error. Please try again later!');
@@ -33,13 +42,7 @@ export const seeOthersLostPetReportsScene = new TelegrafScenes.WizardScene<Teleg
 
         // Coordinates sent by the user to generate the search.
         const coordinates = (context.update as any).message?.location as Coordinates | undefined;
-        if (!coordinates) {
-            const possibleMessage = (context.update as any).message?.text as string | undefined;
-            if (possibleMessage && possibleMessage.toLowerCase() === 'exit') {
-                sendSceneLeaveText(context);
-                return context.scene.leave();
-            }
-            
+        if (!coordinates) {            
             await context.reply('⚠️ You must provide a valid location. (Enter <b>exit</b> to leave)', { parse_mode: 'HTML' });
             return context.wizard.selectStep(1);
         }
@@ -69,22 +72,19 @@ export const seeOthersLostPetReportsScene = new TelegrafScenes.WizardScene<Teleg
     },
     // [Step 2] Pet selection: The user must select one of the available pets regarding the previous search.
     async (context) => {
-        const petId = (context.update as any).callback_query?.data as string | undefined;
-        if (!petId) {
-            const possibleMessage = (context.update as any).message.text as string | undefined; 
-            if (possibleMessage && possibleMessage.toLowerCase() === 'exit') {
-                sendSceneLeaveText(context);
-                return context.scene.leave();
-            }
-
+        if (replyMatchesText(context, 'exit')) {
+            sendSceneLeaveText(context);
+            return context.scene.leave();
+        }
+        if (replyMatchesText(context, 'back')) {
+            return context.scene.reenter();
+        }
+        if (context.updateType !== 'callback_query') {
             await context.reply('⚠️ Please select one of the listed pets. (Enter <b>exit</b> to leave)', { parse_mode: 'HTML' });
             return context.wizard.selectStep(2);
         }
 
-        if (petId === 'back') {
-            // User has selected the option to go back in the options.
-            return context.scene.reenter();
-        }
+        const petId = (context.update as any).callback_query?.data as string;
         
         const petDoc = await storage.findOne<PetDocument>(AppCollections.PETS, { _id: new ObjectId(petId) });
         if (!petDoc) {
@@ -138,23 +138,11 @@ export const seeOthersLostPetReportsScene = new TelegrafScenes.WizardScene<Teleg
     },
     // [Step 3] Report option selection: The user has to select whether they want to notify the owner or exit.
     async (context) => {
-        const selectedOption = (context.update as any).callback_query?.data as string | undefined;
-        if (!selectedOption) {
-            const possibleMessage = (context.update as any).message.text as string | undefined; 
-            if (possibleMessage && possibleMessage.toLowerCase() === 'exit') {
-                sendSceneLeaveText(context);
-                return context.scene.leave();
-            }
-
-            await context.reply('⚠️ Please select one of the listed options. (Enter <b>exit</b> to leave)', { parse_mode: 'HTML' });
-            return context.wizard.selectStep(3);
-        }
-
-        if (selectedOption === 'exit') {
+        if (replyMatchesText(context, 'exit')) {
             sendSceneLeaveText(context);
             return context.scene.leave();
         }
-        if (selectedOption === 'back') {
+        if (replyMatchesText(context, 'back')) {
             const lostPetsKeyboard = await getLostPetsKeyboard(storage, context.from!.id, context.scene.session.userInput!.selectedLocation as GeoLocationInfo, {
                 myPets: false,
                 withBackButton: true,
@@ -163,6 +151,12 @@ export const seeOthersLostPetReportsScene = new TelegrafScenes.WizardScene<Teleg
 
             return context.wizard.back();
         }
+        if (context.updateType !== 'callback_query') {
+            await context.reply('⚠️ Please select one of the listed options. (Enter <b>exit</b> to leave)', { parse_mode: 'HTML' });
+            return context.wizard.selectStep(3);
+        }
+
+        const selectedOption = (context.update as any).callback_query?.data as string;
 
         context.scene.session.targetId = selectedOption;
 
@@ -184,14 +178,17 @@ export const seeOthersLostPetReportsScene = new TelegrafScenes.WizardScene<Teleg
     },
     // [Step 4] Contact information: The user has to provide their own contact information, so the bot can notify the owners with this info.
     async (context) => {
+        if (replyMatchesText(context, 'exit')) {
+            sendSceneLeaveText(context);
+            return context.scene.leave();
+        }
+        if (context.updateType !== 'message') {
+            await context.reply('⚠️ Please provide your contact information. (Enter <b>exit</b> to leave)', { parse_mode: 'HTML' });
+            return context.wizard.selectStep(4);
+        }
+
         const contact = (context.update as any).message.contact as Contact | undefined;
         if (!contact) {
-            const possibleMessage = (context.update as any).message.text as string | undefined; 
-            if (possibleMessage && possibleMessage.toLowerCase() === 'exit') {
-                sendSceneLeaveText(context);
-                return context.scene.leave();
-            }
-
             await context.reply('⚠️ Please provide your contact information. (Enter <b>exit</b> to leave)', { parse_mode: 'HTML' });
             return context.wizard.selectStep(4);
         }

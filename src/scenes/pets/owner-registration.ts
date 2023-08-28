@@ -4,7 +4,7 @@ import { Markup, Scenes as TelegrafScenes } from 'telegraf';
 
 import { AppCollections, storage } from '../../db';
 import { ConversationSessionData, PetDocument, Scenes, UserDocument } from '../../types';
-import { ensureUserExists, getUserPetsListKeyboard, sendSceneLeaveText } from '../../utils';
+import { ensureUserExists, getUserPetsListKeyboard, replyMatchesText, sendSceneLeaveText } from '../../utils';
 
 // Definition of the dialog with the user to add secondary owners to a specific pet.
 export const petOwnerRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScenes.WizardContext<ConversationSessionData>>(
@@ -32,18 +32,17 @@ export const petOwnerRegistrationScene = new TelegrafScenes.WizardScene<Telegraf
     },
     // [Step 1] Pet selection: Step in which the selected pet is detected and verified.
     async (context) => {
-        const userId = context.from?.id;
-        const petId = (context.update as any).callback_query?.data as string | undefined;
-        if (!petId) {
-            const possibleMessage = (context.update as any).message.text as string | undefined; 
-            if (possibleMessage && possibleMessage.toLowerCase() === 'exit') {
-                sendSceneLeaveText(context);
-                return context.scene.leave();
-            }
-
+        if (replyMatchesText(context, 'exit')) {
+            sendSceneLeaveText(context);
+            return context.scene.leave();
+        }
+        if (context.updateType !== 'callback_query') {
             context.reply('⚠️ Please select one of the listed pets.');
             return context.wizard.selectStep(1);
         }
+        
+        const userId = context.from?.id;
+        const petId = (context.update as any).callback_query?.data as string | undefined;
 
         const petDoc = await storage.findOne<PetDocument>(AppCollections.PETS, { _id: new ObjectId(petId) });
         if (!petDoc) {
@@ -82,17 +81,18 @@ export const petOwnerRegistrationScene = new TelegrafScenes.WizardScene<Telegraf
     // [Step 2] New owners definition: In this step the user has entered the text with the new owner IDs.
     // This step also verifies if the IDs can be stored and adds them to the list of owners for the pet that was specified.
     async (context) => {
-        await ensureUserExists(context, storage);
-
-        const newOwnerIds = (context.message as any).text as string | undefined;
-        if (!newOwnerIds) {
-            context.reply('⚠️ Please provide the IDs of new owners to be linked to the current pet.');
-            return context.wizard.selectStep(2);
-        }
-        if (newOwnerIds.toLowerCase() === 'exit') {
+        if (replyMatchesText(context, 'exit')) {
             sendSceneLeaveText(context);
             return context.scene.leave();
         }
+        if (context.updateType !== 'message') {
+            context.reply('⚠️ Please provide the IDs of new owners to be linked to the current pet.');
+            return context.wizard.selectStep(2);
+        }
+
+        await ensureUserExists(context, storage);
+
+        const newOwnerIds = (context.message as any).text as string;
 
         const currentOwnersMap: Record<number, boolean> = {};
         for (const currentOwnerId of context.scene.session.pet?.owners ?? []) {
