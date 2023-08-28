@@ -4,5 +4,6 @@ export enum Scenes {
     PET_OWNER_REGISTRATION = 'petOwnerRegistrationScene',
     LOST_REPORT_CREATION = 'lostPetReportCreationScene',
     PET_REMOVE = 'petRemoveScene',
+    PET_UPDATE = 'petUpdateScene',
     DISPLAY_OTHERS_LOST_REPORT = 'seeOthersLostPetReportsScene',
 }

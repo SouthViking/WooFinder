@@ -36,3 +36,12 @@ export const removePetAction: ActionHandlerDefinition = {
         (context as any).scene.enter(Scenes.PET_REMOVE);
     },
 };
+
+export const updatePetAction: ActionHandlerDefinition = {
+    type: HandlerType.ACTION,
+    name: 'Update pet',
+    trigger: TriggerType.PET_UPDATE,
+    callback: async (context) => {
+        (context as any).scene.enter(Scenes.PET_UPDATE);
+    },
+};

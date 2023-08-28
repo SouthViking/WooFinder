@@ -1,13 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ObjectId } from 'mongodb';
-import { Markup, Scenes as TelegrafScenes } from 'telegraf';
+import { Scenes as TelegrafScenes } from 'telegraf';
 
 import { AppCollections, storage } from '../../db';
-import { generateTelegramKeyboardWithButtons } from '../../utils/misc';
-import { ConversationSessionData, Full, KeyboardButtonData, PetData, PetDocument, Scenes, SpeciesDocument } from '../../types';
-import { ensureUserExists, generatePetSummaryHTMLMessage, getPetEmojiForSpeciesName, isValidBirthDate, replyMatchesText, sendSceneLeaveText } from '../../utils';
-
-const MAX_SECONDARY_PET_NAMES_ALLOWED = 5;
+import { ConversationSessionData, Full, PetData, PetDocument, Scenes } from '../../types';
+import {
+    MAX_SECONDARY_PET_NAMES_ALLOWED,
+    ensureUserExists,
+    generatePetSummaryHTMLMessage,
+    isValidBirthDate,
+    replyMatchesText,
+    sendBirthDateRegistrationMessage,
+    sendDescriptionRegistrationMessage,
+    sendPetNameRegistrationMessage,
+    sendPetSecondaryOwnersRegistrationMessage,
+    sendPictureRegistrationMessage,
+    sendSceneLeaveText,
+    sendSizeRegistrationMessage,
+    sendSpeciesRegistrationMessage,
+    sendWeightRegistrationMessage,
+} from '../../utils';
 
 // Definition of the scene with the steps that will be executed whenever a user starts a new pet creation.
 export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScenes.WizardContext<ConversationSessionData>>(
@@ -17,29 +29,7 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
         context.scene.session.pet = {};
         context.scene.session.pet.owners = [context.from!.id];
 
-        const species = await storage.findAndGetAll<SpeciesDocument>(AppCollections.SPECIES, {});
-        if (species.length === 0) {
-            context.reply('⚠️ There are no species available right now for pet registration. Please try again later!');
-            sendSceneLeaveText(context);
-            return context.scene.leave();
-        }
-
-        const buttons: KeyboardButtonData[] = species.map(speciesDoc => {
-            const petEmoji = getPetEmojiForSpeciesName(speciesDoc.name);
-            return {
-                text: `${petEmoji ? `${petEmoji} ` : ''}${speciesDoc.name}`,
-                data: speciesDoc._id.toString(),
-            }
-        });
-        const keyboard = generateTelegramKeyboardWithButtons(buttons, 2);
-
-        context.reply(
-            'Okay! Lets add a new pet to your list! (Enter <b>"exit"</b> to cancel / <b>"back"</b> to go to previous steps)',
-            {
-                parse_mode: 'HTML',
-            }
-        );
-        context.reply('What kind of pet would you like to register?', { ...Markup.inlineKeyboard(keyboard) });
+        await sendSpeciesRegistrationMessage(context);
 
         return context.wizard.next();
     },
@@ -58,10 +48,7 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
 
         context.scene.session.pet!.species = new ObjectId(speciesId);
 
-        context.reply(
-            'Now enter the name of your pet.',
-            { parse_mode: 'HTML' },    
-        );
+        await sendPetNameRegistrationMessage(context);
 
         return context.wizard.next();
     },
@@ -83,10 +70,7 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
 
         context.scene.session.pet!.name = answer;
 
-        let instructionsMessage = 'Sometimes pets have more than one name that they can recognize. ';
-        instructionsMessage += `Please enter a list of secondary names separated by a space (max ${MAX_SECONDARY_PET_NAMES_ALLOWED}), send <b>"no"</b> otherwise.`;
-
-        context.reply(instructionsMessage, { parse_mode: 'HTML' });
+        await sendPetSecondaryOwnersRegistrationMessage(context);
 
         return context.wizard.next();
     },
@@ -110,7 +94,7 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
             context.scene.session.pet!.otherNames = answer.split(' ').slice(0, MAX_SECONDARY_PET_NAMES_ALLOWED);
         }
 
-        context.reply('Enter pet\'s birthdate (format: <b>yyyy-mm-dd</b>)', { parse_mode: 'HTML' });
+        await sendBirthDateRegistrationMessage(context);
 
         return context.wizard.next();
     },
@@ -143,12 +127,7 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
 
         context.scene.session.pet!.birthDate = parsedBirthDate;
 
-        context.reply('Please select the estimated size of your pet', { 
-            ...Markup.inlineKeyboard([
-                [Markup.button.callback('small', 'small'), Markup.button.callback('medium', 'medium')],
-                [Markup.button.callback('large', 'large'), Markup.button.callback('giant', 'giant')]
-            ]) ,
-        });
+        await sendSizeRegistrationMessage(context);
 
         return context.wizard.next();
     },
@@ -163,7 +142,7 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
 
         context.scene.session.pet!.size = petSize
 
-        context.reply('Now enter the estimated weight (kg)');
+        await sendWeightRegistrationMessage(context);
 
         return context.wizard.next();
     },
@@ -191,10 +170,7 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
 
         context.scene.session.pet!.weight = parsedWeight;
 
-        let descriptionMessage = 'We are almost done! Please provide a small description about your pet.';
-        descriptionMessage += '\nDescribe details that can help people to recognize your pet, such as hair, eyes/hair color, barking style, hair patterns, etc.';
-
-        context.reply(descriptionMessage);
+        await sendDescriptionRegistrationMessage(context);
 
         return context.wizard.next();
     },
@@ -216,10 +192,7 @@ export const petRegistrationScene = new TelegrafScenes.WizardScene<TelegrafScene
 
         context.scene.session.pet!.description = answer;
 
-        let pictureMessage = 'Last but not least! Send us a picture of your pet.';
-        pictureMessage += ' Please provide a picture that matches the previous description.';
-        
-        context.reply(pictureMessage);
+        await sendPictureRegistrationMessage(context);
 
         return context.wizard.next();
 
