@@ -1,6 +1,6 @@
 import { AppCollections, Storage } from '../db';
 import { generateTelegramKeyboardWithButtons } from './misc';
-import { KeyboardButtonData, PetData, PetDocument } from '../types';
+import { KeyboardButtonData, PetData, PetDocument, SpeciesDocument } from '../types';
 
 const MIN_ALLOWED_BIRTHDATE = '2000-01-01';
 const MIN_ALLOWED_BIRTHDATE_TIMESTAMP = Date.parse(MIN_ALLOWED_BIRTHDATE);
@@ -34,9 +34,16 @@ export const isValidBirthDate = (birthDate: number): {
  * @param storage The storage object to get the collection of pets.
  */
 export const getUserPetsListKeyboard = async (userId: number, storage: Storage) => {
+    const species = await storage.findAndGetAll<SpeciesDocument>(AppCollections.SPECIES, {});
+    const speciesMap: Record<string, string> = {}; 
+    for (const speciesDoc of species) {
+        speciesMap[speciesDoc._id.toString()] = speciesDoc.name;
+    }
+
     const userPets: KeyboardButtonData[] = (await storage.findAndGetAll<PetDocument>(AppCollections.PETS, { 'owners.0': userId })).map(petDoc => {
+        const petEmoji = getPetEmojiForSpeciesName(speciesMap[petDoc.species.toString()]);
         return {
-            text: petDoc.name,
+            text: petEmoji.length !== 0 ? `${petEmoji} ${petDoc.name}` : petDoc.name,
             data: petDoc._id.toString(),
         };
     });
