@@ -9,3 +9,12 @@ export const seeOthersReportsAction: ActionHandlerDefinition = {
         (context as any).scene.enter(Scenes.DISPLAY_OTHERS_LOST_REPORT);
     },
 };
+
+export const seeMyReportsAction: ActionHandlerDefinition = {
+    type: HandlerType.ACTION,
+    name: 'See my own reports',
+    trigger: TriggerType.DISPLAY_MY_LOST_REPORTS,
+    callback: async (context) => {
+        (context as any).scene.enter(Scenes.DISPLAY_MY_LOST_REPORTS);
+    },
+};

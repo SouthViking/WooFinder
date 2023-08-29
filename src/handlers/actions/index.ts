@@ -1,4 +1,4 @@
-import { seeOthersReportsAction } from './reports';
+import { seeMyReportsAction, seeOthersReportsAction } from './reports';
 import { ActionHandlerDefinition } from '../../types';
 import { registerPetAction, registerPetOwnerAction, createLostPetReport, removePetAction, updatePetAction } from './pets';
 
@@ -9,4 +9,5 @@ export const actionHandlers: ActionHandlerDefinition[] = [
     removePetAction,
     updatePetAction,
     seeOthersReportsAction,
+    seeMyReportsAction,
 ];
