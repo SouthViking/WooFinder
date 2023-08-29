@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  woofinder-bot:
+    build:
+      context: .
+    image: woofinder-bot
+    container_name: woofinder-bot-container
+    env_file:
+      - ./.env
