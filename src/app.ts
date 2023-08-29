@@ -69,6 +69,10 @@ class WooFinderBot {
     public launch() {
         this.bot.launch();
     }
+
+    public stop(reason: string | undefined) {
+        this.bot.stop(reason);
+    }
 }
 
 const bot = new WooFinderBot({
@@ -79,3 +83,6 @@ const bot = new WooFinderBot({
 });
 
 bot.launch();
+
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
