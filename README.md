@@ -55,7 +55,7 @@ TODO
 
 ### 🥇 Credits 
 
-This project has been created and developed by SouthViking as a personal project.
+This project has been created and developed by **SouthViking** as a personal project.
 
 #### Acknowledgements
 
