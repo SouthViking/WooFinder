@@ -48,6 +48,17 @@ export class Storage {
         return results;
     }
 
+    public async findAndGetAllAsObject<T extends Document>(collectionName: string, query: Filter<T>, options?: FindOptions) {
+        const results = await this.findAndGetAll<T>(collectionName, query, options);
+
+        const resultsMap: Record<string, WithId<T>> = {};
+        for (const result of results) {
+            resultsMap[result._id.toString()] = result;
+        }
+
+        return resultsMap;
+    }
+
     public async findOne<T extends Document>(collectionName: string, query: Filter<T>, options?: FindOptions): Promise<WithId<T> | null> {
         const collection = this.getCollection<T>(collectionName);
         

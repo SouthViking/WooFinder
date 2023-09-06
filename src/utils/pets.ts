@@ -21,14 +21,10 @@ export const getPetEmojiForSpeciesName = (species: string) => {
  * @param storage The storage object to get the collection of pets.
  */
 export const getUserPetsListKeyboard = async (userId: number, storage: Storage) => {
-    const species = await storage.findAndGetAll<SpeciesDocument>(AppCollections.SPECIES, {});
-    const speciesMap: Record<string, string> = {}; 
-    for (const speciesDoc of species) {
-        speciesMap[speciesDoc._id.toString()] = speciesDoc.name;
-    }
+    const species = await storage.findAndGetAllAsObject<SpeciesDocument>(AppCollections.SPECIES, {});
 
     const userPets: KeyboardButtonData[] = (await storage.findAndGetAll<PetDocument>(AppCollections.PETS, { 'owners.0': userId })).map(petDoc => {
-        const petEmoji = getPetEmojiForSpeciesName(speciesMap[petDoc.species.toString()]);
+        const petEmoji = getPetEmojiForSpeciesName(species[petDoc.species.toString()]?.name ?? '');
         return {
             text: petEmoji.length !== 0 ? `${petEmoji} ${petDoc.name}` : petDoc.name,
             data: petDoc._id.toString(),

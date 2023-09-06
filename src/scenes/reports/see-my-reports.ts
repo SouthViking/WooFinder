@@ -20,19 +20,16 @@ export const seeMyLostPetReportsScene = new TelegrafScenes.WizardScene<TelegrafS
             return context.scene.leave();
         }
 
-        const userPets = (await storage.findAndGetAll<PetDocument>(AppCollections.PETS, { 'owners.0': userId }, { projection: { name: 1 } }));
-        const petsNameMap: Record<string, string> = {};
-        for (const petDoc of userPets) {
-            petsNameMap[petDoc._id.toString()] = petDoc.name;
-        }
+        const userPets = (await storage.findAndGetAllAsObject<PetDocument>(AppCollections.PETS, { 'owners.0': userId }, { projection: { name: 1 } }));
 
         const userReportsButtons: KeyboardButtonData[] = (await storage.findAndGetAll<LostPetReportDocument>(AppCollections.REPORTS, {
             petId:
                 {
-                    $in: userPets.map(petDoc => (petDoc._id)),
+                    $in: Object.keys(userPets).map(petId => (new ObjectId(petId))),
                 },
         })).map(reportDoc => {
-            const petName = petsNameMap[reportDoc.petId.toString()];
+            const petName = userPets[reportDoc.petId.toString()].name;
+
             return {
                 text: `${petName} (${timeAgo.format(reportDoc.createdAt)})`,
                 data: `${reportDoc._id.toString()}_${petName}`,

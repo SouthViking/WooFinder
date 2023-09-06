@@ -66,17 +66,12 @@ export const getLostPetsKeyboard = async (storage: Storage, userId: number, loca
         reportedDatesMap[reportDoc.petId.toString()]  = reportDoc.updatedAt ?? reportDoc.createdAt;
     }
 
-    const petSpeciesMap: Record<string, string> = {};
-
-    const species = await storage.findAndGetAll<SpeciesDocument>(AppCollections.SPECIES, {});
-    for (const speciesDoc of species) {
-        petSpeciesMap[speciesDoc._id.toString()] = getPetEmojiForSpeciesName(speciesDoc.name);
-    }
+    const species = await storage.findAndGetAllAsObject<SpeciesDocument>(AppCollections.SPECIES, {});
 
     const targetPets: KeyboardButtonData[] = (await storage.findAndGetAll<PetDocument>(AppCollections.PETS, { _id: { $in: targetPetIds } })).map(petDoc => {
-        const petEmoji = petSpeciesMap[petDoc.species.toString()];
         const elapsedTime = reportedDatesMap[petDoc._id.toString()];
         const reportedTimeAgo = timeAgo.format(new Date(elapsedTime));
+        const petEmoji = getPetEmojiForSpeciesName(species[petDoc.species.toString()]?.name ?? '');
 
         const label = petEmoji.length !== 0 ? `${petEmoji} ${petDoc.name} (${reportedTimeAgo})` : petDoc.name;
         
