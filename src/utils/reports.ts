@@ -37,31 +37,13 @@ export const getLostPetsKeyboard = async (storage: Storage, userId: number, loca
     // Find the pets where the owner is the current user ID.
     const userPetsIds = (await storage.findAndGetAll<PetDocument>(AppCollections.PETS, { 'owners.0': userId }, { projection: { _id: 1 } })).map(petDoc => (petDoc._id));
 
-    // Query to find the reports that are near to the provided location in a certain radius.
-    const searchQuery: Filter<LostPetReportDocument> = {
-        $and: [
-            {
-                lastSeen: {
-                    $geoWithin: {
-                        $centerSphere: [
-                            [locationInfo.coordinates.longitude, locationInfo.coordinates.latitude],
-                            locationInfo.radiusKm / 6378.1,
-                        ]
-                    }
-                }
-            },
-            { isActive: true },
-            { petId: options.myPets ? { $in: userPetsIds } : { $nin: userPetsIds } },
-        ]
-    };
-
     // List containing the ID of the pets regarding the active reports that were found
     const targetPetIds: ObjectId[] = [];
     // Map of the reports dates to display it with the name in the keyboard (with timeago format)
     const reportedDatesMap: Record<string, number> = {};
 
-    const reportsFound = await storage.findAndGetAll(AppCollections.REPORTS, searchQuery);
-    for (const reportDoc of reportsFound) {
+    const lostPetReports = await getLostPetReportsNearToLocation(storage, locationInfo, userPetsIds);
+    for (const reportDoc of lostPetReports) {
         targetPetIds.push(reportDoc.petId);
         reportedDatesMap[reportDoc.petId.toString()]  = reportDoc.updatedAt ?? reportDoc.createdAt;
     }
@@ -88,4 +70,29 @@ export const getLostPetsKeyboard = async (storage: Storage, userId: number, loca
     }
 
     return keyboard;
+};
+
+export const getLostPetReportsNearToLocation = async (storage: Storage, location: GeoLocationInfo, petsToExclude: ObjectId[] = []) => {
+    // Query to find the reports that are near to the provided location in a certain radius.
+    const searchQuery: Filter<LostPetReportDocument> = {
+        $and: [
+            {
+                lastSeen: {
+                    $geoWithin: {
+                        $centerSphere: [
+                            [location.coordinates.longitude, location.coordinates.latitude],
+                            location.radiusKm / 6378.1,
+                        ]
+                    }
+                }
+            },
+            { isActive: true },
+        ]
+    };
+
+    if (petsToExclude.length !== 0) {
+        searchQuery.$and!.push({ petId: { $nin: petsToExclude } });
+    }
+
+    return await storage.findAndGetAll(AppCollections.REPORTS, searchQuery);
 };
