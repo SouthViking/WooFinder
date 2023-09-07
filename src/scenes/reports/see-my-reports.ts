@@ -5,8 +5,8 @@ import en from 'javascript-time-ago/locale/en.json';
 import { Markup, Scenes as TelegrafScenes } from 'telegraf';
 
 import { AppCollections, storage } from '../../db';
-import { generateTelegramKeyboardWithButtons, getUserPets, replyMatchesText, sendSceneLeaveText } from '../../utils';
-import { ConversationSessionData, Coordinates, KeyboardButtonData, LostPetReportDocument, Scenes } from '../../types';
+import { ConversationSessionData, Coordinates, KeyboardButtonData, LostPetReportDocument, Scenes, SpeciesDocument } from '../../types';
+import { generateTelegramKeyboardWithButtons, getPetEmojiForSpeciesName, getUserPets, replyMatchesText, sendSceneLeaveText } from '../../utils';
 
 TimeAgo.addDefaultLocale(en)
 const timeAgo = new TimeAgo('en-US');
@@ -20,7 +20,8 @@ export const seeMyLostPetReportsScene = new TelegrafScenes.WizardScene<TelegrafS
             return context.scene.leave();
         }
 
-        const userPets = await getUserPets(storage, userId, ['_id', 'name']);
+        const userPets = await getUserPets(storage, userId, ['_id', 'name', 'species']);
+        const species = await storage.findAndGetAllAsObject<SpeciesDocument>(AppCollections.SPECIES, {});
         const userLostPetReports = await storage.findAndGetAll<LostPetReportDocument>(AppCollections.REPORTS, {
             petId: {
                 $in: Object.keys(userPets).map(petId => (new ObjectId(petId))),
@@ -36,8 +37,10 @@ export const seeMyLostPetReportsScene = new TelegrafScenes.WizardScene<TelegrafS
 
         const buttons: KeyboardButtonData[] = [];
         for (const reportDoc of userLostPetReports) {
-            const petName = userPets[reportDoc.petId.toString()].name;
-            buttons.push({ text: `${petName} (${timeAgo.format(reportDoc.createdAt)})`, data:  `${reportDoc._id.toString()}_${petName}` });
+            const petData = userPets[reportDoc.petId.toString()];
+            const petEmoji = getPetEmojiForSpeciesName(species[petData.species.toString()]?.name ?? '');
+
+            buttons.push({ text: `${petEmoji} ${petData.name} (${timeAgo.format(reportDoc.createdAt)})`, data:  `${reportDoc._id.toString()}_${petData.name}` });
         }
 
         await context.reply('🔎🐾 Please select one of your current reports.', {
