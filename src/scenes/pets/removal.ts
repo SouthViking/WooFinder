@@ -16,7 +16,7 @@ export const petRemoveScene = new TelegrafScenes.WizardScene<TelegrafScenes.Wiza
             return context.scene.leave();
         }
 
-        const keyboard = await getUserPetsListKeyboard(userId, storage);
+        const keyboard = await getUserPetsListKeyboard(storage, userId);
 
         if (keyboard.length === 0) {
             context.reply(`⚠️ You don't have pets registered right now. Use the /pets menu to register them.`);

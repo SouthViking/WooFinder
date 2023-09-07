@@ -20,18 +20,19 @@ export const getPetEmojiForSpeciesName = (species: string) => {
  * @param userId The ID of the target user.
  * @param storage The storage object to get the collection of pets.
  */
-export const getUserPetsListKeyboard = async (userId: number, storage: Storage) => {
+export const getUserPetsListKeyboard = async (storage: Storage, userId: number) => {
+    const userPets = await getUserPets(storage, userId, ['_id', 'name', 'species']);
     const species = await storage.findAndGetAllAsObject<SpeciesDocument>(AppCollections.SPECIES, {});
 
-    const userPets: KeyboardButtonData[] = (await storage.findAndGetAll<PetDocument>(AppCollections.PETS, { 'owners.0': userId })).map(petDoc => {
-        const petEmoji = getPetEmojiForSpeciesName(species[petDoc.species.toString()]?.name ?? '');
-        return {
-            text: petEmoji.length !== 0 ? `${petEmoji} ${petDoc.name}` : petDoc.name,
-            data: petDoc._id.toString(),
-        };
-    });
+    const buttons: KeyboardButtonData[] = [];
+    for (const petId in userPets) {
+        const petDoc = userPets[petId];
+        const petEmoji = getPetEmojiForSpeciesName(species[petDoc.species.toString()].name);
+        
+        buttons.push({ text: petEmoji.length !== 0 ? `${petEmoji} ${petDoc.name}` : petDoc.name, data: petDoc._id.toString() });
+    }
 
-    return generateTelegramKeyboardWithButtons(userPets, 2);
+    return generateTelegramKeyboardWithButtons(buttons, 2);
 };
 
 export const generatePetSummaryHTMLMessage = (petData: PetData) => {
@@ -107,4 +108,17 @@ export const sendPictureRegistrationMessage = async (context: TelegrafScenes.Wiz
     pictureMessage += ' Please provide a picture that matches the previous description.';
     
     await context.reply(pictureMessage);
+};
+
+export const getUserPets = async (storage: Storage, userId: number, fields: (keyof PetData | '_id')[] | '*') => {
+    let projection: Record<string, number> | undefined;
+    
+    if (fields !== '*') {
+        projection = {};
+        for (const field of fields) {
+            projection[field] = 1;
+        }
+    }
+
+    return await storage.findAndGetAllAsObject<PetDocument>(AppCollections.PETS, { 'owners.0': userId }, { projection });
 };

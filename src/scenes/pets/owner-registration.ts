@@ -17,7 +17,7 @@ export const petOwnerRegistrationScene = new TelegrafScenes.WizardScene<Telegraf
             return context.scene.leave();
         }
 
-        const petsButtons = await getUserPetsListKeyboard(userId, storage);
+        const petsButtons = await getUserPetsListKeyboard(storage, userId);
 
         if (petsButtons.length === 0) {
             context.reply('⚠️ You don\'t have pets registered right now.');

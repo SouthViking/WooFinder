@@ -5,8 +5,8 @@ import en from 'javascript-time-ago/locale/en.json';
 import { Markup, Scenes as TelegrafScenes } from 'telegraf';
 
 import { AppCollections, storage } from '../../db';
-import { generateTelegramKeyboardWithButtons, replyMatchesText, sendSceneLeaveText } from '../../utils';
-import { ConversationSessionData, Coordinates, KeyboardButtonData, LostPetReportDocument, PetDocument, Scenes } from '../../types';
+import { generateTelegramKeyboardWithButtons, getUserPets, replyMatchesText, sendSceneLeaveText } from '../../utils';
+import { ConversationSessionData, Coordinates, KeyboardButtonData, LostPetReportDocument, Scenes } from '../../types';
 
 TimeAgo.addDefaultLocale(en)
 const timeAgo = new TimeAgo('en-US');
@@ -20,34 +20,30 @@ export const seeMyLostPetReportsScene = new TelegrafScenes.WizardScene<TelegrafS
             return context.scene.leave();
         }
 
-        const userPets = (await storage.findAndGetAllAsObject<PetDocument>(AppCollections.PETS, { 'owners.0': userId }, { projection: { name: 1 } }));
+        const userPets = await getUserPets(storage, userId, ['_id', 'name']);
+        const userLostPetReports = await storage.findAndGetAll<LostPetReportDocument>(AppCollections.REPORTS, {
+            petId: {
+                $in: Object.keys(userPets).map(petId => (new ObjectId(petId))),
+            },
+        });
 
-        const userReportsButtons: KeyboardButtonData[] = (await storage.findAndGetAll<LostPetReportDocument>(AppCollections.REPORTS, {
-            petId:
-                {
-                    $in: Object.keys(userPets).map(petId => (new ObjectId(petId))),
-                },
-        })).map(reportDoc => {
-            const petName = userPets[reportDoc.petId.toString()].name;
-
-            return {
-                text: `${petName} (${timeAgo.format(reportDoc.createdAt)})`,
-                data: `${reportDoc._id.toString()}_${petName}`,
-            }
-        }); 
-
-        const keyboard = generateTelegramKeyboardWithButtons(userReportsButtons, 2);
-
-        if (keyboard.length === 0) {
+        if (userLostPetReports.length === 0) {
             await context.reply('⚠️ You don\'t have reports created. You can create them from the <b>/reports</b> menu.', {
                 parse_mode: 'HTML',
             });
             return context.scene.leave();
         }
 
+        const buttons: KeyboardButtonData[] = [];
+        for (const reportDoc of userLostPetReports) {
+            const petName = userPets[reportDoc.petId.toString()].name;
+            buttons.push({ text: `${petName} (${timeAgo.format(reportDoc.createdAt)})`, data:  `${reportDoc._id.toString()}_${petName}` });
+        }
+
         await context.reply('🔎🐾 Please select one of your current reports.', {
-            ...Markup.inlineKeyboard(keyboard),
+            ...Markup.inlineKeyboard(generateTelegramKeyboardWithButtons(buttons, 2)),
         });
+
         return context.wizard.next();
     },
     async (context) => {
